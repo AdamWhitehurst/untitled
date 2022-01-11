@@ -7,3 +7,4 @@ version = "0.1.0"
 
 [dependencies]
 bevy = "0.6"
+kayak_ui = {git = "https://github.com/StarArawn/kayak_ui", rev = "4b1757940540e722e1388d82208c5ea5f0e4b799"}

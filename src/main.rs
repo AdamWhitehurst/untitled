@@ -1,12 +1,22 @@
+use bevy::asset::{HandleId, LoadState};
 use bevy::prelude::*;
-use std::vec;
 
 mod sprite;
-use sprite::*;
+
+#[derive(Default, Clone)]
+struct ImageHandles {
+    handles: Vec<HandleId>,
+    atlas_loaded: bool,
+}
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .init_resource::<ImageHandles>()
+        .add_startup_stage(
+            "load asset",
+            SystemStage::parallel().with_system(setup_tiles),
+        )
         .add_startup_system(setup)
         .add_startup_system(setup_tiles)
         .add_system(animate_sprite_system)
@@ -26,23 +36,15 @@ fn animate_sprite_system(
         }
     }
 }
-fn setup_tiles(
-    mut commands: Commands,
-    asset_server: Res<AssetServer>,
-    mut textures: ResMut<Assets<Image>>,
-) {
+fn setup_tiles(mut commands: Commands, asset_server: Res<AssetServer>) {
     // let mut handles: Vec<Handle<Image>> = Vec<Handle<Image>>::new();
-    let mut handles = Vec::<Handle<Image>>::new();
-    let a = asset_server.load_folder("mob").unwrap();
-    sprite::tiles.iter().map(|&s| {
-        let h = asset_server.load(s);
-        if let Some(t) = textures.get(h) {
-            commands.spawn_bundle(SpriteBundle {})
-        } else {
-            info!("not yet");
-        }
-    });
-    info!("{:?}", handles);
+    let handles: Vec<HandleId> = sprite::tiles
+        .iter()
+        .map(|&s| asset_server.load::<Image, &str>(s).id)
+        .collect();
+}
+fn watch_load() {
+    if let LoadState::Loaded = asset_server.get_group_load_state(handles) {}
 }
 fn setup(
     mut commands: Commands,
