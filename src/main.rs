@@ -1,25 +1,25 @@
-use bevy::asset::{HandleId, LoadState};
+use bevy::asset::LoadState;
 use bevy::prelude::*;
 
 mod sprite;
 
-#[derive(Default, Clone)]
-struct ImageHandles {
-    handles: Vec<HandleId>,
-    atlas_loaded: bool,
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum AssetState {
+    Initial,
+    Loading,
+    Loaded,
 }
 
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .init_resource::<ImageHandles>()
-        .add_startup_stage(
-            "load asset",
-            SystemStage::parallel().with_system(setup_tiles),
-        )
-        .add_startup_system(setup)
-        .add_startup_system(setup_tiles)
-        .add_system(animate_sprite_system)
+    let mut app = App::new();
+
+    app.add_plugins(DefaultPlugins)
+        .init_resource::<Vec<Handle<Image>>>()
+        .add_state(AssetState::Initial)
+        .add_system_set(SystemSet::on_enter(AssetState::Initial).with_system(setup_tiles))
+        .add_system_set(SystemSet::on_update(AssetState::Loading).with_system(watch_load))
+        .add_system_set(SystemSet::on_enter(AssetState::Loaded).with_system(setup))
+        .add_system_set(SystemSet::on_update(AssetState::Loaded).with_system(animate_sprite_system))
         .run();
 }
 
@@ -36,24 +36,46 @@ fn animate_sprite_system(
         }
     }
 }
-fn setup_tiles(mut commands: Commands, asset_server: Res<AssetServer>) {
-    // let mut handles: Vec<Handle<Image>> = Vec<Handle<Image>>::new();
-    let handles: Vec<HandleId> = sprite::tiles
+
+fn setup_tiles(
+    asset_server: Res<AssetServer>,
+    mut asset_state: ResMut<State<AssetState>>,
+    mut handles: ResMut<Vec<Handle<Image>>>,
+) {
+    *handles = sprite::TILES
         .iter()
-        .map(|&s| asset_server.load::<Image, &str>(s).id)
+        .map(|&s| asset_server.load::<Image, &str>(s))
         .collect();
+
+    asset_state.set(AssetState::Loading).expect("Loading");
 }
-fn watch_load() {
-    if let LoadState::Loaded = asset_server.get_group_load_state(handles) {}
+
+fn watch_load(
+    asset_server: Res<AssetServer>,
+    handles: ResMut<Vec<Handle<Image>>>,
+    mut asset_state: ResMut<State<AssetState>>,
+) {
+    if let LoadState::Loaded = asset_server.get_group_load_state(handles.iter().map(|s| s.id)) {
+        asset_state.set(AssetState::Loaded).expect("Loaded");
+    }
 }
 fn setup(
     mut commands: Commands,
-    asset_server: Res<AssetServer>,
+    // asset_server: Res<AssetServer>,
+    mut textures: ResMut<Assets<Image>>,
+    handles: ResMut<Vec<Handle<Image>>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    let texture_handle = asset_server.load("char/gabe/gabe-idle-run.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(24.0, 24.0), 7, 1);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    let mut texture_atlas = TextureAtlasBuilder::default();
+
+    for handle in handles.iter() {
+        if let Some(t) = textures.get(handle) {
+            texture_atlas.add_texture(handle.clone(), t);
+        }
+    }
+
+    let texture_atlas_handle =
+        texture_atlases.add(texture_atlas.finish(&mut textures).expect("texture_atlas"));
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands
         .spawn_bundle(SpriteSheetBundle {
