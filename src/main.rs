@@ -1,7 +1,30 @@
 use bevy::asset::LoadState;
 use bevy::prelude::*;
+use bevy::{
+    prelude::{App as BevyApp, AssetServer, Commands, Res, ResMut},
+    window::WindowDescriptor,
+    DefaultPlugins,
+};
+use kayak_ui::bevy::{BevyContext, BevyKayakUIPlugin, FontMapping, UICameraBundle};
+use kayak_ui::core::Index;
+use kayak_ui::core::{render, rsx, widget};
+use kayak_ui::widgets::{App, Window};
 
 mod sprite;
+
+#[widget]
+fn CustomWidget() {
+    rsx! {
+        <>
+            <Window position={(50.0, 50.0)} size={(300.0, 300.0)} title={"Window 1".to_string()}>
+                {}
+            </Window>
+            <Window position={(550.0, 50.0)} size={(200.0, 200.0)} title={"Window 2".to_string()}>
+                {}
+            </Window>
+        </>
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 enum AssetState {
@@ -11,16 +34,38 @@ enum AssetState {
 }
 
 fn main() {
-    let mut app = App::new();
+    let mut app = BevyApp::new();
 
     app.add_plugins(DefaultPlugins)
+        .add_plugin(BevyKayakUIPlugin)
         .init_resource::<Vec<Handle<Image>>>()
         .add_state(AssetState::Initial)
         .add_system_set(SystemSet::on_enter(AssetState::Initial).with_system(setup_tiles))
         .add_system_set(SystemSet::on_update(AssetState::Loading).with_system(watch_load))
         .add_system_set(SystemSet::on_enter(AssetState::Loaded).with_system(setup))
         .add_system_set(SystemSet::on_update(AssetState::Loaded).with_system(animate_sprite_system))
+        .add_startup_system(startup_ui)
         .run();
+}
+
+fn startup_ui(
+    mut commands: Commands,
+    mut font_mapping: ResMut<FontMapping>,
+    asset_server: Res<AssetServer>,
+) {
+    commands.spawn_bundle(UICameraBundle::new());
+
+    font_mapping.add(asset_server.load("roboto.kayak_font"));
+
+    let context = BevyContext::new(|context| {
+        render! {
+            <App>
+                <CustomWidget />
+            </App>
+        }
+    });
+
+    commands.insert_resource(context);
 }
 
 fn animate_sprite_system(
