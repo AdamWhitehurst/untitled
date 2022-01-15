@@ -1,28 +1,59 @@
-use bevy::asset::LoadState;
+use bevy::asset::{LoadContext, LoadState};
 use bevy::prelude::*;
 use bevy::{
+    log::prelude::*,
     prelude::{App as BevyApp, AssetServer, Commands, Res, ResMut},
     window::WindowDescriptor,
     DefaultPlugins,
 };
 use kayak_ui::bevy::{BevyContext, BevyKayakUIPlugin, FontMapping, UICameraBundle};
-use kayak_ui::core::Index;
-use kayak_ui::core::{render, rsx, widget};
-use kayak_ui::widgets::{App, Window};
-
+use kayak_ui::core::{
+    render, rsx,
+    styles::{Style, StyleProp, Units},
+    use_state, widget, Color, Index,
+};
+use kayak_ui::widgets::{App, OnChange, Text, TextBox, Window};
 mod sprite;
 
 #[widget]
-fn CustomWidget() {
+fn TextBoxExample(context: &mut KayakContext) {
+    let (value, set_value, _) = use_state!("I started with a value!".to_string());
+    let (empty_value, set_empty_value, _) = use_state!("".to_string());
+    let (red_value, set_red_value, _) = use_state!("This text is red".to_string());
+
+    let input_styles = Style {
+        top: StyleProp::Value(Units::Pixels(10.0)),
+        ..Default::default()
+    };
+
+    let red_text_styles = Style {
+        color: StyleProp::Value(Color::new(1., 0., 0., 1.)),
+        ..input_styles.clone()
+    };
+
+    let on_change = OnChange::new(move |event| {
+        set_value(event.value);
+    });
+
+    let on_change_empty = OnChange::new(move |event| {
+        set_empty_value(event.value);
+    });
+
+    let on_change_red = OnChange::new(move |event| {
+        set_red_value(event.value);
+    });
+
     rsx! {
-        <>
-            <Window position={(50.0, 50.0)} size={(300.0, 300.0)} title={"Window 1".to_string()}>
-                {}
-            </Window>
-            <Window position={(550.0, 50.0)} size={(200.0, 200.0)} title={"Window 2".to_string()}>
-                {}
-            </Window>
-        </>
+        <Window position={(50.0, 50.0)} size={(300.0, 300.0)} title={"TextBox Example".to_string()}>
+            <TextBox styles={Some(input_styles)} value={value} on_change={Some(on_change)} />
+            <TextBox
+                styles={Some(input_styles)}
+                value={empty_value}
+                on_change={Some(on_change_empty)}
+                placeholder={Some("This is a placeholder".to_string())}
+            />
+            <TextBox styles={Some(red_text_styles)} value={red_value} on_change={Some(on_change_red)} />
+        </Window>
     }
 }
 
@@ -36,16 +67,22 @@ enum AssetState {
 fn main() {
     let mut app = BevyApp::new();
 
-    app.add_plugins(DefaultPlugins)
-        .add_plugin(BevyKayakUIPlugin)
-        .init_resource::<Vec<Handle<Image>>>()
-        .add_state(AssetState::Initial)
-        .add_system_set(SystemSet::on_enter(AssetState::Initial).with_system(setup_tiles))
-        .add_system_set(SystemSet::on_update(AssetState::Loading).with_system(watch_load))
-        .add_system_set(SystemSet::on_enter(AssetState::Loaded).with_system(setup))
-        .add_system_set(SystemSet::on_update(AssetState::Loaded).with_system(animate_sprite_system))
-        .add_startup_system(startup_ui)
-        .run();
+    app.insert_resource(WindowDescriptor {
+        width: 1270.0,
+        height: 720.0,
+        title: String::from(""),
+        ..Default::default()
+    })
+    .add_plugins(DefaultPlugins)
+    .add_plugin(BevyKayakUIPlugin)
+    .init_resource::<Vec<Handle<Image>>>()
+    .add_startup_system(startup_ui)
+    .add_state(AssetState::Initial)
+    .add_system_set(SystemSet::on_enter(AssetState::Initial).with_system(setup_tiles))
+    .add_system_set(SystemSet::on_update(AssetState::Loading).with_system(watch_load))
+    .add_system_set(SystemSet::on_enter(AssetState::Loaded).with_system(setup))
+    .add_system_set(SystemSet::on_update(AssetState::Loaded).with_system(animate_sprite_system))
+    .run();
 }
 
 fn startup_ui(
@@ -60,14 +97,13 @@ fn startup_ui(
     let context = BevyContext::new(|context| {
         render! {
             <App>
-                <CustomWidget />
+            <TextBoxExample />
             </App>
         }
     });
 
     commands.insert_resource(context);
 }
-
 fn animate_sprite_system(
     time: Res<Time>,
     texture_atlases: Res<Assets<TextureAtlas>>,
@@ -106,7 +142,6 @@ fn watch_load(
 }
 fn setup(
     mut commands: Commands,
-    // asset_server: Res<AssetServer>,
     mut textures: ResMut<Assets<Image>>,
     handles: ResMut<Vec<Handle<Image>>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
