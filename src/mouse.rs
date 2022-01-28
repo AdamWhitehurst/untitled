@@ -24,13 +24,13 @@ fn update_global_cursor_pos(
 ) {
     let (last_pos, _) = *global_cursor;
     let win = windows.get_primary().expect("primary_window");
-    for (t, _) in query.iter() {
+    for (t, o) in query.iter() {
         *global_cursor = if let Some(cursor_screen_pos) = win.cursor_position() {
             let win_half_dims = Vec2::new(win.width() / 2.0, win.height() / 2.0);
             let cam_global_pos = Vec2::new(t.translation.x, t.translation.y);
 
             (
-                Some(cursor_screen_pos - win_half_dims + cam_global_pos),
+                Some((cursor_screen_pos - win_half_dims) * o.scale + cam_global_pos),
                 last_pos,
             )
         } else {
