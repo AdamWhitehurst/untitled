@@ -2525,6 +2525,8 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_ecs_tilemap",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
