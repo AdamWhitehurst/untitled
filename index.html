@@ -2,6 +2,11 @@
 
 <head>
     <meta charset="UTF-8" />
+    <script type="application/javascript">
+        document.addEventListener("contextmenu", function (e) {
+            e.preventDefault();
+        })
+    </script>
     <style>
         body {
             background: linear-gradient(135deg,
@@ -24,5 +29,6 @@
     import init from './public/runi.js'
     init()
 </script>
-
+<body>
+</body>
 </html>
