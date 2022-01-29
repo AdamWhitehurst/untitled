@@ -59,7 +59,6 @@ fn watch_load(
 fn load_map(
     mut commands: Commands,
     handles: ResMut<Vec<Handle<Image>>>,
-    asset_server: Res<AssetServer>,
     mut map_query: MapQuery,
     mut textures: ResMut<Assets<Image>>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
@@ -73,7 +72,6 @@ fn load_map(
     }
 
     let ta = tab.finish(&mut textures).expect("texture_atlas");
-    let tah = texture_atlases.add(ta.clone());
 
     let map_entity = commands.spawn().id();
     let mut map = Map::new(0u16, map_entity);
@@ -81,7 +79,7 @@ fn load_map(
     let texture_size = TextureSize(ta.size.x, ta.size.y);
     let tile_size = TileSize(16.0, 16.0);
     let chunk_size = ChunkSize(8, 8);
-    let map_size = MapSize(10, 10);
+    let map_size = MapSize(2, 2);
 
     let (mut layer_builder, _) = LayerBuilder::new(
         &mut commands,

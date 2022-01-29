@@ -650,6 +650,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_tiled_camera"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "21b4bdd8dc357330fed8327804678b66f43435e18a2844a63ad0413be4ed9f58"
+dependencies = [
+ "bevy",
+]
+
+[[package]]
 name = "bevy_transform"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2525,6 +2534,7 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_ecs_tilemap",
+ "bevy_tiled_camera",
  "wasm-bindgen",
  "web-sys",
 ]
