@@ -30,8 +30,9 @@ fn setup_tiles(
 ) {
     let tiles = vec![
         //
-        "grass_tile.png",
-        "dirt_tile.png",
+        // "grass_tile.png",
+        // "pond.png",
+        // "dirt_tile.png",
         "tiles.png",
     ];
     *handles = tiles.iter().map(|s| asset_server.load(*s)).collect();
@@ -61,7 +62,7 @@ fn load_map(
     handles: ResMut<Vec<Handle<Image>>>,
     mut map_query: MapQuery,
     mut textures: ResMut<Assets<Image>>,
-    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    asset_server: Res<AssetServer>,
 ) {
     let mut tab = TextureAtlasBuilder::default();
 
@@ -71,12 +72,18 @@ fn load_map(
         }
     }
 
+    // let ta = asset_server.load("pond.png");
+    // let tex = textures.get(ta.clone()).expect("pond.png");
     let ta = tab.finish(&mut textures).expect("texture_atlas");
 
     let map_entity = commands.spawn().id();
     let mut map = Map::new(0u16, map_entity);
 
     let texture_size = TextureSize(ta.size.x, ta.size.y);
+    // let texture_size = TextureSize(
+    //     tex.texture_descriptor.size.width as f32,
+    //     tex.texture_descriptor.size.height as f32,
+    // );
     let tile_size = TileSize(16.0, 16.0);
     let chunk_size = ChunkSize(8, 8);
     let map_size = MapSize(2, 2);
@@ -90,14 +97,13 @@ fn load_map(
 
     layer_builder.set_all(TileBundle {
         tile: Tile {
-            texture_index: 3u16,
+            texture_index: 4u16,
             ..Default::default()
         },
         ..Default::default()
     });
 
-    let layer_entity =
-        map_query.build_layer(&mut commands, layer_builder, ta.clone().texture.clone());
+    let layer_entity = map_query.build_layer(&mut commands, layer_builder, ta.texture.clone());
 
     map.add_layer(&mut commands, 0u16, layer_entity);
 
