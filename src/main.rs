@@ -4,6 +4,7 @@ mod camera;
 #[cfg(target_arch = "wasm32")]
 mod canvas_resizer;
 mod mouse;
+mod player;
 mod tiles;
 
 fn main() {

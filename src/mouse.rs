@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use bevy_ecs_tilemap::Map;
 use bevy_ecs_tilemap::MapQuery;
 use bevy_ecs_tilemap::{Tile, TilePos};
+use bevy_tiled_camera::TiledProjection;
 pub struct Plugin;
 pub type GlobalCursorPosition = (Option<Vec2>, Option<Vec2>);
 pub type CursorTilePosition = (Option<TilePos>, Option<TilePos>);
@@ -19,25 +20,27 @@ impl BevyPlugin for Plugin {
 
 fn update_global_cursor_pos(
     windows: Res<Windows>,
-    query: Query<(&Transform, &OrthographicProjection), With<Camera>>,
+    query: Query<(&GlobalTransform, &TiledProjection, &Camera)>,
     mut global_cursor: ResMut<GlobalCursorPosition>,
 ) {
-    let (last_pos, _) = *global_cursor;
-    let win = windows.get_primary().expect("primary_window");
-    for (t, o) in query.iter() {
-        *global_cursor = if let Some(cursor_screen_pos) = win.cursor_position() {
-            let win_half_dims = Vec2::new(win.width() / 2.0, win.height() / 2.0);
-            let cam_global_pos = Vec2::new(t.translation.x, t.translation.y);
-
-            (
-                Some((cursor_screen_pos - win_half_dims) * o.scale + cam_global_pos),
-                last_pos,
-            )
-        } else {
-            (None, last_pos)
-        };
-        // info!("{:?}", global_cursor);
-    }
+    // let (last_pos, _) = *global_cursor;
+    // let (gt, tp, c) = query.single();
+    // tp.screen_to_world(c, windows, gt, screen_pos)
+    // let win = windows.get_primary().expect("primary_window");
+    //     for (t, o) in query.iter() {
+    //         *global_cursor = if let Some(cursor_screen_pos) = win.cursor_position() {
+    //             let win_half_dims = Vec2::new(win.width() / 2.0, win.height() / 2.0);
+    //             let cam_global_pos = Vec2::new(t.translation.x, t.translation.y);
+    //
+    //             (
+    //                 Some((cursor_screen_pos - win_half_dims) * o. + cam_global_pos),
+    //                 last_pos,
+    //             )
+    //         } else {
+    //             (None, last_pos)
+    //         };
+    //         // info!("{:?}", global_cursor);
+    //     }
 }
 
 fn update_cursor_tile_pos(
