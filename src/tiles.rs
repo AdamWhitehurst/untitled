@@ -2,6 +2,7 @@ use bevy::asset::LoadState;
 use bevy::prelude::*;
 use bevy::render::render_resource::TextureUsages;
 use bevy_ecs_tilemap::prelude::*;
+use rand::{thread_rng, Rng};
 // use rand::{thread_rng, Rng};
 pub struct TilesPlugin;
 
@@ -30,10 +31,8 @@ fn setup_tiles(
 ) {
     let tiles = vec![
         //
-        // "grass_tile.png",
-        // "pond.png",
-        // "dirt_tile.png",
-        "tiles.png",
+        "micro/tilesets/iso.png",
+        // "micro/characters/basic/basic_idle_01.png",
     ];
     *handles = tiles.iter().map(|s| asset_server.load(*s)).collect();
     asset_state.set(AssetState::Loading).expect("Loading");
@@ -64,53 +63,72 @@ fn load_map(
     mut textures: ResMut<Assets<Image>>,
     asset_server: Res<AssetServer>,
 ) {
-    let mut tab = TextureAtlasBuilder::default();
+    let texture_handle = asset_server.load("micro/tilesets/iso.png");
 
-    for handle in handles.iter() {
-        if let Some(t) = textures.get(handle) {
-            tab.add_texture(handle.clone(), t);
-        }
-    }
-
-    // let ta = asset_server.load("pond.png");
-    // let tex = textures.get(ta.clone()).expect("pond.png");
-    let ta = tab.finish(&mut textures).expect("texture_atlas");
-
+    // Create map entity and component:
     let map_entity = commands.spawn().id();
     let mut map = Map::new(0u16, map_entity);
 
-    let texture_size = TextureSize(ta.size.x, ta.size.y);
-    // let texture_size = TextureSize(
-    //     tex.texture_descriptor.size.width as f32,
-    //     tex.texture_descriptor.size.height as f32,
-    // );
-    let tile_size = TileSize(16.0, 16.0);
-    let chunk_size = ChunkSize(8, 8);
-    let map_size = MapSize(2, 2);
+    let map_size = MapSize(1, 16);
+    let chunk_size = ChunkSize(16, 1);
+    let tile_size = TileSize(18.0, 20.0);
+    let texture_size = TextureSize(126., 120.);
+    let grid_size = Vec2::new(16.0, 8.0);
 
-    let (mut layer_builder, _) = LayerBuilder::new(
-        &mut commands,
-        LayerSettings::new(map_size, chunk_size, tile_size, texture_size),
-        0u16,
-        0u16,
-    );
+    let mut map_settings = LayerSettings::new(map_size, chunk_size, tile_size, texture_size);
 
-    layer_builder.set_all(TileBundle {
+    map_settings.grid_size = grid_size;
+    map_settings.mesh_type = TilemapMeshType::Isometric(IsoType::Diamond3d);
+
+    info!("{:?}", map_settings);
+
+    let (mut layer_0, layer_0_entity) =
+        LayerBuilder::<TileBundle>::new(&mut commands, map_settings.clone(), 0u16, 0u16);
+    map.add_layer(&mut commands, 0u16, layer_0_entity);
+
+    let center = layer_0.settings.get_pixel_center();
+    layer_0.set_all(TileBundle {
         tile: Tile {
-            texture_index: 4u16,
+            texture_index: 7,
             ..Default::default()
         },
         ..Default::default()
     });
 
-    let layer_entity = map_query.build_layer(&mut commands, layer_builder, ta.texture.clone());
+    // Make 2 layers on "top" of the base map.
+    for z in 0..1 {
+        let (mut layer_builder, layer_entity) =
+            LayerBuilder::new(&mut commands, map_settings.clone(), 0u16, z + 1);
+        map.add_layer(&mut commands, z + 1, layer_entity);
 
-    map.add_layer(&mut commands, 0u16, layer_entity);
+        let mut random = thread_rng();
 
-    let map_dims = tile_size.0 * chunk_size.0 as f32 * (map_size.0 as f32 * 0.5);
+        for x in 0..16 {
+            for y in 0..16 {
+                let position = TilePos(x, y);
+                // Ignore errors for demo sake.
+                let _ = layer_builder.set_tile(
+                    position,
+                    TileBundle {
+                        tile: Tile {
+                            texture_index: 7 + random.gen_range(0..6) + z + 1,
+                            ..Default::default()
+                        },
+                        ..Default::default()
+                    },
+                );
+            }
+        }
+
+        map_query.build_layer(&mut commands, layer_builder, texture_handle.clone());
+    }
+
+    map_query.build_layer(&mut commands, layer_0, texture_handle.clone());
+    info!("CENTER: {:?}", center);
+
     commands
         .entity(map_entity)
         .insert(map)
-        .insert(Transform::from_xyz(-map_dims, -map_dims, 0.0))
+        .insert(Transform::from_xyz(-24., 82., 0.0))
         .insert(GlobalTransform::default());
 }

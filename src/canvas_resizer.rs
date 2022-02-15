@@ -46,7 +46,6 @@ fn resizer(
                 width: width,
             });
             resize_canvas(width, height);
-            info!("Resizing to {:?},{:?}", width, height);
         }
     }
 }
@@ -56,6 +55,6 @@ pub struct WebCanvasResizerPlugin;
 impl Plugin for WebCanvasResizerPlugin {
     fn build(&self, app: &mut App) {
         #[cfg(target_arch = "wasm32")]
-        app.add_system(resizer.system());
+        app.add_system(resizer);
     }
 }

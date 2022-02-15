@@ -2,6 +2,9 @@ use bevy::prelude::Plugin as BevyPlugin;
 use bevy::prelude::*;
 use bevy::render::camera::Camera;
 use bevy_tiled_camera::*;
+
+#[derive(Default, Debug, Component, Clone, Copy)]
+pub struct CameraFollow;
 pub struct Plugin;
 
 impl BevyPlugin for Plugin {
@@ -9,12 +12,14 @@ impl BevyPlugin for Plugin {
         app.add_startup_system(setup)
             .add_plugin(TiledCameraPlugin)
             .insert_resource(Msaa { samples: 4 })
-            .add_system(global_cursor);
+            .add_system(global_cursor)
+            .add_system(follow_character);
     }
 }
 
 #[derive(Component)]
 struct Cursor;
+
 fn global_cursor(
     windows: Res<Windows>,
     q_camera: Query<(&Camera, &GlobalTransform, &TiledProjection)>,
@@ -33,22 +38,26 @@ fn global_cursor(
 }
 
 fn setup(mut commands: Commands) {
-    // commands.spawn_bundle(OrthographicCameraBundle::new_2d());
-
-    let camera_bundle = TiledCameraBundle::new()
-        .with_tile_count([1000, 800])
-        .with_target_resolution(16, [1280, 720]);
+    let mut camera_bundle = OrthographicCameraBundle::new_2d();
+    camera_bundle.orthographic_projection.scale = 0.25;
+    // camera_bundle.transform.translation.z =
     commands.spawn_bundle(camera_bundle);
+}
 
-    let col = Color::rgba(1.0, 1.0, 1.0, 0.35);
-    let cursor = SpriteBundle {
-        sprite: Sprite {
-            color: col,
-            custom_size: Some(Vec2::ONE),
-            ..Default::default()
-        },
-        transform: Transform::from_xyz(0.0, 0.0, 2.0),
-        ..Default::default()
-    };
-    commands.spawn_bundle(cursor).insert(Cursor);
+fn follow_character(
+    mut transforms: Query<&mut Transform>,
+    q_cam: Query<Entity, With<Camera>>,
+    q_follow: Query<Entity, With<CameraFollow>>,
+) {
+    if let (Ok(src_e), Ok(flw_e)) = (q_follow.get_single(), q_cam.get_single()) {
+        let mut tr = None;
+        if let Ok(f_t) = transforms.get(src_e) {
+            tr = Some(f_t.translation.clone());
+        }
+
+        if let (Ok(mut t), Some(tr)) = (transforms.get_mut(flw_e), tr) {
+            t.translation.x = tr.x;
+            t.translation.y = tr.y;
+        }
+    }
 }

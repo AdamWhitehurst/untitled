@@ -39,7 +39,6 @@ fn update_global_cursor_pos(
     //         } else {
     //             (None, last_pos)
     //         };
-    //         // info!("{:?}", global_cursor);
     //     }
 }
 
@@ -109,7 +108,6 @@ fn tile_change(
                 },
                 ..*tile
             };
-            info!("Index: {:?}", tile.texture_index);
             map.notify_chunk_for_tile(pos, 0u16, 0u16);
         }
     }

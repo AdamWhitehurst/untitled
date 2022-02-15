@@ -1,6 +1,9 @@
+use bevy::core::FixedTimestep;
 use bevy::prelude::Plugin as BevyPlugin;
 use bevy::prelude::*;
-use bevy::core::FixedTimestep;
+
+use crate::camera::CameraFollow;
+use crate::sprite::CharacterAnimation;
 
 pub struct Plugin;
 #[derive(Component, Debug, Default, Clone, Copy)]
@@ -15,17 +18,37 @@ impl BevyPlugin for Plugin {
                 // Set the stage criteria to run the system at the target
                 //  rate per seconds
                 .with_run_criteria(FixedTimestep::steps_per_second(60.0))
-                .with_system(movement),
-        );
+                .with_system(player_movement)
+                .with_system(animate_sprite),
+        )
+        .add_startup_system(setup);
     }
 }
 
-// A simple camera system for moving and zooming the camera.
-pub fn movement(
-    keyboard_input: Res<Input<KeyCode>>,
-    mut query: Query<(&mut Transform), With<PlayerCharacter>>,
+fn setup(
+    mut commands: Commands,
+    asset_server: Res<AssetServer>,
+    mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    for (mut t) in query.iter_mut() {
+    let texture_handle = asset_server.load("micro/characters/basic/basic_idle_01.png");
+    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(64., 64.), 13, 21);
+    let texture_atlas_handle = texture_atlases.add(texture_atlas);
+    commands
+        .spawn_bundle(SpriteSheetBundle {
+            texture_atlas: texture_atlas_handle,
+            transform: Transform::from_xyz(0.0, 0.0, 100.0),
+            ..Default::default()
+        })
+        .insert(CameraFollow)
+        .insert(PlayerCharacter);
+}
+
+// A simple camera system for moving and zooming the camera.
+fn player_movement(
+    keyboard_input: Res<Input<KeyCode>>,
+    mut query: Query<&mut Transform, With<PlayerCharacter>>,
+) {
+    for mut t in query.iter_mut() {
         let mut direction = Vec3::ZERO;
 
         if keyboard_input.pressed(KeyCode::A) {
@@ -50,5 +73,18 @@ pub fn movement(
         // Important! We need to restore the Z values when moving the camera around.
         // Bevy has a specific camera setup and this can mess with how our layers are shown.
         t.translation.z = z;
+    }
+}
+
+fn animate_sprite(
+    time: Res<Time>,
+    mut query: Query<(&mut CharacterAnimation, &mut TextureAtlasSprite)>,
+) {
+    for (mut timer, mut sprite) in query.iter_mut() {
+        timer.0.tick(time.delta());
+        if timer.1 && timer.0.just_finished() {
+            sprite.index = (timer.2 * 13) + ((sprite.index + 1) % (9 * timer.2));
+            info!("{:?}", sprite.index);
+        }
     }
 }
