@@ -55,19 +55,18 @@ fn setup(
     texture_handles.iter().for_each(|t| {
         tab.add_texture(t.clone(), textures.get(t).expect("character tex setup"));
     });
-    let sprite_bundle = SpriteSheetBundle {
-            texture_atlas: texture_atlas_handle,
-            transform: Transform::from_xyz(0.0, 0.0, 100.0),
-            ..Default::default()
-        };
-        sprite_bundle.
     let texture_atlas_handle =
         texture_atlases.add(tab.finish(&mut textures).expect("texture_atlas_builder"));
+    let sprite_bundle = SpriteSheetBundle {
+        texture_atlas: texture_atlas_handle,
+        transform: Transform::from_xyz(0.0, 0.0, 100.0),
+        ..Default::default()
+    };
     commands
         .spawn_bundle(sprite_bundle)
         .insert(CharacterAnimation(
-            Timer::new(Duration::new(1, 0), true),
-            false,
+            Timer::new(Duration::from_secs_f32(0.5), true),
+            true,
             4,
         ))
         .insert(CameraFollow)
@@ -110,14 +109,18 @@ fn player_movement(
 
 fn animate_sprite(
     time: Res<Time>,
-    mut query: Query<(&mut CharacterAnimation, &mut TextureAtlasSprite)>,
+    mut query: Query<(
+        &mut CharacterAnimation,
+        &mut TextureAtlasSprite,
+        &Handle<TextureAtlas>,
+    )>,
+    texture_atlases: Res<Assets<TextureAtlas>>,
 ) {
-    for (mut timer, mut sprite) in query.iter_mut() {
-        info!("Yes");
+    for (mut timer, mut sprite, ta) in query.iter_mut() {
         timer.0.tick(time.delta());
         if timer.1 && timer.0.just_finished() {
-            // sprite.index = (timer.2 * 13) + ((sprite.index + 1) % (9 * timer.2));
-            sprite.index = (sprite.index + 1) % timer.2;
+            let taa = texture_atlases.get(ta).expect("texture atlas for anim");
+            sprite.index = (sprite.index + 1) % taa.textures.len();
         }
     }
 }
