@@ -40,7 +40,6 @@ fn global_cursor(
 fn setup(mut commands: Commands) {
     let mut camera_bundle = OrthographicCameraBundle::new_2d();
     camera_bundle.orthographic_projection.scale = 0.25;
-    // camera_bundle.transform.translation.z =
     commands.spawn_bundle(camera_bundle);
 }
 

@@ -1,13 +1,26 @@
+use std::time::Duration;
+
 use bevy::core::FixedTimestep;
 use bevy::prelude::Plugin as BevyPlugin;
 use bevy::prelude::*;
 
 use crate::camera::CameraFollow;
+use crate::mouse::GlobalCursorPosition;
 use crate::sprite::CharacterAnimation;
 
 pub struct Plugin;
 #[derive(Component, Debug, Default, Clone, Copy)]
 pub struct PlayerCharacter;
+
+pub enum PlayerState {
+    Idle,
+}
+
+// pub type PlayerAnimation = Vec<>
+//
+// impl PlayerState {
+//     fn to_animation(&self) -> Into
+// }
 
 impl BevyPlugin for Plugin {
     fn build(&self, app: &mut App) {
@@ -21,7 +34,8 @@ impl BevyPlugin for Plugin {
                 .with_system(player_movement)
                 .with_system(animate_sprite),
         )
-        .add_startup_system(setup);
+        // .add_startup_system(setup);
+        .add_system_set(SystemSet::on_enter(crate::tiles::AssetState::Loaded).with_system(setup));
     }
 }
 
@@ -29,16 +43,33 @@ fn setup(
     mut commands: Commands,
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+    mut textures: ResMut<Assets<Image>>,
 ) {
-    let texture_handle = asset_server.load("micro/characters/basic/basic_idle_01.png");
-    let texture_atlas = TextureAtlas::from_grid(texture_handle, Vec2::new(64., 64.), 13, 21);
-    let texture_atlas_handle = texture_atlases.add(texture_atlas);
-    commands
-        .spawn_bundle(SpriteSheetBundle {
+    let texture_handles: Vec<Handle<Image>> = vec![
+        asset_server.load("micro/characters/basic/basic_idle_01.png"),
+        asset_server.load("micro/characters/basic/basic_idle_02.png"),
+        asset_server.load("micro/characters/basic/basic_idle_03.png"),
+        asset_server.load("micro/characters/basic/basic_idle_04.png"),
+    ];
+    let mut tab = TextureAtlasBuilder::default(); //::add_texture(&mut self, texture_handle, texture)//from_grid(texture_handle, Vec2::new(64., 64.), 13, 21);
+    texture_handles.iter().for_each(|t| {
+        tab.add_texture(t.clone(), textures.get(t).expect("character tex setup"));
+    });
+    let sprite_bundle = SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
             transform: Transform::from_xyz(0.0, 0.0, 100.0),
             ..Default::default()
-        })
+        };
+        sprite_bundle.
+    let texture_atlas_handle =
+        texture_atlases.add(tab.finish(&mut textures).expect("texture_atlas_builder"));
+    commands
+        .spawn_bundle(sprite_bundle)
+        .insert(CharacterAnimation(
+            Timer::new(Duration::new(1, 0), true),
+            false,
+            4,
+        ))
         .insert(CameraFollow)
         .insert(PlayerCharacter);
 }
@@ -46,6 +77,7 @@ fn setup(
 // A simple camera system for moving and zooming the camera.
 fn player_movement(
     keyboard_input: Res<Input<KeyCode>>,
+    cursor_tile: Res<GlobalCursorPosition>,
     mut query: Query<&mut Transform, With<PlayerCharacter>>,
 ) {
     for mut t in query.iter_mut() {
@@ -81,10 +113,11 @@ fn animate_sprite(
     mut query: Query<(&mut CharacterAnimation, &mut TextureAtlasSprite)>,
 ) {
     for (mut timer, mut sprite) in query.iter_mut() {
+        info!("Yes");
         timer.0.tick(time.delta());
         if timer.1 && timer.0.just_finished() {
-            sprite.index = (timer.2 * 13) + ((sprite.index + 1) % (9 * timer.2));
-            info!("{:?}", sprite.index);
+            // sprite.index = (timer.2 * 13) + ((sprite.index + 1) % (9 * timer.2));
+            sprite.index = (sprite.index + 1) % timer.2;
         }
     }
 }

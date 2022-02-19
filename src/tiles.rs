@@ -7,7 +7,7 @@ use rand::{thread_rng, Rng};
 pub struct TilesPlugin;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-enum AssetState {
+pub enum AssetState {
     Initial,
     Loading,
     Loaded,
@@ -32,7 +32,10 @@ fn setup_tiles(
     let tiles = vec![
         //
         "micro/tilesets/iso.png",
-        // "micro/characters/basic/basic_idle_01.png",
+        "micro/characters/basic/basic_idle_01.png",
+        "micro/characters/basic/basic_idle_02.png",
+        "micro/characters/basic/basic_idle_03.png",
+        "micro/characters/basic/basic_idle_04.png",
     ];
     *handles = tiles.iter().map(|s| asset_server.load(*s)).collect();
     asset_state.set(AssetState::Loading).expect("Loading");
@@ -80,26 +83,23 @@ fn load_map(
     map_settings.grid_size = grid_size;
     map_settings.mesh_type = TilemapMeshType::Isometric(IsoType::Diamond3d);
 
-    info!("{:?}", map_settings);
+    // let (mut layer_0, layer_0_entity) =
+    //     LayerBuilder::<TileBundle>::new(&mut commands, map_settings.clone(), 0u16, 0u16);
+    // map.add_layer(&mut commands, 0u16, layer_0_entity);
 
-    let (mut layer_0, layer_0_entity) =
-        LayerBuilder::<TileBundle>::new(&mut commands, map_settings.clone(), 0u16, 0u16);
-    map.add_layer(&mut commands, 0u16, layer_0_entity);
-
-    let center = layer_0.settings.get_pixel_center();
-    layer_0.set_all(TileBundle {
-        tile: Tile {
-            texture_index: 7,
-            ..Default::default()
-        },
-        ..Default::default()
-    });
+    // layer_0.set_all(TileBundle {
+    //     tile: Tile {
+    //         texture_index: 7,
+    //         ..Default::default()
+    //     },
+    //     ..Default::default()
+    // });
 
     // Make 2 layers on "top" of the base map.
     for z in 0..1 {
         let (mut layer_builder, layer_entity) =
-            LayerBuilder::new(&mut commands, map_settings.clone(), 0u16, z + 1);
-        map.add_layer(&mut commands, z + 1, layer_entity);
+            LayerBuilder::new(&mut commands, map_settings.clone(), 0u16, z);
+        map.add_layer(&mut commands, z, layer_entity);
 
         let mut random = thread_rng();
 
@@ -111,20 +111,19 @@ fn load_map(
                     position,
                     TileBundle {
                         tile: Tile {
-                            texture_index: 7 + random.gen_range(0..6) + z + 1,
+                            texture_index: random.gen_range(0..4) * 7,
                             ..Default::default()
                         },
+
                         ..Default::default()
                     },
                 );
             }
         }
-
         map_query.build_layer(&mut commands, layer_builder, texture_handle.clone());
     }
 
-    map_query.build_layer(&mut commands, layer_0, texture_handle.clone());
-    info!("CENTER: {:?}", center);
+    // map_query.build_layer(&mut commands, layer_0, texture_handle.clone());
 
     commands
         .entity(map_entity)

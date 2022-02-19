@@ -1,5 +1,6 @@
 use bevy::prelude::Plugin as BevyPlugin;
 use bevy::prelude::*;
+use bevy::render::camera::CameraProjection;
 use bevy_ecs_tilemap::Map;
 use bevy_ecs_tilemap::MapQuery;
 use bevy_ecs_tilemap::{Tile, TilePos};
@@ -20,26 +21,25 @@ impl BevyPlugin for Plugin {
 
 fn update_global_cursor_pos(
     windows: Res<Windows>,
-    query: Query<(&GlobalTransform, &TiledProjection, &Camera)>,
+    query: Query<(&Transform, &OrthographicProjection, &Camera)>,
     mut global_cursor: ResMut<GlobalCursorPosition>,
 ) {
-    // let (last_pos, _) = *global_cursor;
-    // let (gt, tp, c) = query.single();
-    // tp.screen_to_world(c, windows, gt, screen_pos)
-    // let win = windows.get_primary().expect("primary_window");
-    //     for (t, o) in query.iter() {
-    //         *global_cursor = if let Some(cursor_screen_pos) = win.cursor_position() {
-    //             let win_half_dims = Vec2::new(win.width() / 2.0, win.height() / 2.0);
-    //             let cam_global_pos = Vec2::new(t.translation.x, t.translation.y);
-    //
-    //             (
-    //                 Some((cursor_screen_pos - win_half_dims) * o. + cam_global_pos),
-    //                 last_pos,
-    //             )
-    //         } else {
-    //             (None, last_pos)
-    //         };
-    //     }
+    let (last_pos, _) = *global_cursor;
+    let win = windows.get_primary().expect("primary_window");
+    for (t, o, c) in query.iter() {
+        *global_cursor = if let Some(cursor_screen_pos) = win.cursor_position() {
+            let win_half_dims = Vec2::new(win.width() / 2.0, win.height() / 2.0);
+            let cam_global_pos = Vec2::new(t.translation.x, t.translation.y);
+
+            (
+                Some((cursor_screen_pos - win_half_dims) * o.scale + cam_global_pos),
+                last_pos,
+            )
+        } else {
+            (None, last_pos)
+        };
+        info!("GC: {:?}", global_cursor);
+    }
 }
 
 fn update_cursor_tile_pos(
@@ -78,9 +78,19 @@ fn update_cursor_tile_pos(
 
             Some(t)
         } else {
+            info!(
+                " None
+                - {:?} 
+                - {:?} 
+                - {:?} 
+                - {:?}
+                ",
+                pos, map_bl_pos, map_pixel_dims, map_tr_pos
+            );
             None
         }
     } else {
+        info!("None 2");
         None
     };
 
@@ -96,19 +106,21 @@ fn tile_change(
     let (maybe_curr, _) = *cursor_tile;
 
     if let Some(pos) = maybe_curr {
-        let te = map.get_tile_entity(pos, 0u16, 0u16).expect("tile");
-        if let Ok(mut tile) = tile_query.get_mut(te) {
-            *tile = Tile {
-                texture_index: if buttons.just_pressed(MouseButton::Left) {
-                    tile.texture_index.checked_add(1).unwrap_or(0)
-                } else if buttons.just_pressed(MouseButton::Right) {
-                    tile.texture_index.checked_sub(1).unwrap_or(0)
-                } else {
-                    tile.texture_index
-                },
-                ..*tile
-            };
-            map.notify_chunk_for_tile(pos, 0u16, 0u16);
+        if let Ok(te) = map.get_tile_entity(pos, 0u16, 0u16) {
+            if let Ok(mut tile) = tile_query.get_mut(te) {
+                info!("Tile: {:?}", pos);
+                *tile = Tile {
+                    texture_index: if buttons.just_pressed(MouseButton::Left) {
+                        tile.texture_index.checked_add(1).unwrap_or(0)
+                    } else if buttons.just_pressed(MouseButton::Right) {
+                        tile.texture_index.checked_sub(1).unwrap_or(0)
+                    } else {
+                        tile.texture_index
+                    },
+                    ..*tile
+                };
+                map.notify_chunk_for_tile(pos, 0u16, 0u16);
+            }
         }
     }
 }
