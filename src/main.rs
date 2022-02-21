@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::window::WindowResizeConstraints;
 use bevy::{window::WindowDescriptor, DefaultPlugins};
 mod camera;
 mod mouse;
@@ -12,11 +13,15 @@ fn main() {
     let mut app = App::new();
 
     app.insert_resource(WindowDescriptor {
+        resizable: true,
         width: 1270.0,
         height: 720.0,
         title: String::from(""),
         ..Default::default()
     })
+    .insert_resource(ClearColor(
+        Color::hex("291e31").expect("Color::hex(\"291e31\")"),
+    ))
     .add_plugins(DefaultPlugins)
     .add_plugin(camera::Plugin)
     .add_plugin(tiles::TilesPlugin)
@@ -25,6 +30,5 @@ fn main() {
 
     #[cfg(target_arch = "wasm32")]
     app.add_plugin(canvas_resizer::WebCanvasResizerPlugin);
-
     app.run();
 }

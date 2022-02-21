@@ -4,7 +4,6 @@ use bevy::render::camera::CameraProjection;
 use bevy_ecs_tilemap::Map;
 use bevy_ecs_tilemap::MapQuery;
 use bevy_ecs_tilemap::{Tile, TilePos};
-use bevy_tiled_camera::TiledProjection;
 pub struct Plugin;
 pub type GlobalCursorPosition = (Option<Vec2>, Option<Vec2>);
 pub type CursorTilePosition = (Option<TilePos>, Option<TilePos>);
@@ -57,8 +56,8 @@ fn update_cursor_tile_pos(
         // Computer Map bounds
         let map_bl_pos = trfm.translation;
         let map_pixel_dims = (
-            l.settings.tile_size.0 * l.settings.chunk_size.0 as f32 * l.settings.map_size.0 as f32,
-            l.settings.tile_size.1 * l.settings.chunk_size.1 as f32 * l.settings.map_size.1 as f32,
+            l.settings.grid_size.x * l.settings.chunk_size.0 as f32 * l.settings.map_size.0 as f32,
+            l.settings.grid_size.y * l.settings.chunk_size.1 as f32 * l.settings.map_size.1 as f32,
         );
         let map_tr_pos = (
             map_bl_pos.x + map_pixel_dims.0,
@@ -72,17 +71,17 @@ fn update_cursor_tile_pos(
         {
             let offsetted_cursor = (pos.x - map_bl_pos.x, pos.y - map_bl_pos.y);
             let t = TilePos(
-                ((offsetted_cursor.0) / l.settings.tile_size.0) as u32,
-                ((offsetted_cursor.1) / l.settings.tile_size.1) as u32,
+                ((offsetted_cursor.0) / l.settings.grid_size.x) as u32,
+                ((offsetted_cursor.1) / l.settings.grid_size.y) as u32,
             );
 
             Some(t)
         } else {
             info!(
                 " None
-                - {:?} 
-                - {:?} 
-                - {:?} 
+                - {:?}
+                - {:?}
+                - {:?}
                 - {:?}
                 ",
                 pos, map_bl_pos, map_pixel_dims, map_tr_pos
@@ -108,7 +107,6 @@ fn tile_change(
     if let Some(pos) = maybe_curr {
         if let Ok(te) = map.get_tile_entity(pos, 0u16, 0u16) {
             if let Ok(mut tile) = tile_query.get_mut(te) {
-                info!("Tile: {:?}", pos);
                 *tile = Tile {
                     texture_index: if buttons.just_pressed(MouseButton::Left) {
                         tile.texture_index.checked_add(1).unwrap_or(0)

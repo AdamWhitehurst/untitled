@@ -349,7 +349,7 @@ dependencies = [
 [[package]]
 name = "bevy_ecs_tilemap"
 version = "0.5.0"
-source = "git+https://github.com/StarArawn/bevy_ecs_tilemap?branch=main#41e7a7a2856014c895d3ac3a1807cd3a8a466957"
+source = "git+https://github.com/StarArawn/bevy_ecs_tilemap?branch=main#e54f71a4978c56594847b24d441d2314a4d51060"
 dependencies = [
  "bevy",
  "bytemuck",
@@ -645,15 +645,6 @@ dependencies = [
  "glyph_brush_layout",
  "serde",
  "thiserror",
-]
-
-[[package]]
-name = "bevy_tiled_camera"
-version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "21b4bdd8dc357330fed8327804678b66f43435e18a2844a63ad0413be4ed9f58"
-dependencies = [
- "bevy",
 ]
 
 [[package]]
@@ -2475,7 +2466,6 @@ version = "0.1.0"
 dependencies = [
  "bevy",
  "bevy_ecs_tilemap",
- "bevy_tiled_camera",
  "rand",
  "wasm-bindgen",
  "web-sys",

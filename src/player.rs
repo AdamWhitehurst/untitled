@@ -28,12 +28,10 @@ impl BevyPlugin for Plugin {
             CoreStage::Update,
             "fixed_update",
             SystemStage::parallel()
-                // Set the stage criteria to run the system at the target
-                //  rate per seconds
-                .with_run_criteria(FixedTimestep::steps_per_second(60.0))
-                .with_system(player_movement)
-                .with_system(animate_sprite),
+                .with_run_criteria(FixedTimestep::steps_per_second(5.0))
+                .with_system(player_movement),
         )
+        .add_system(animate_sprite)
         // .add_startup_system(setup);
         .add_system_set(SystemSet::on_enter(crate::tiles::AssetState::Loaded).with_system(setup));
     }
@@ -59,13 +57,13 @@ fn setup(
         texture_atlases.add(tab.finish(&mut textures).expect("texture_atlas_builder"));
     let sprite_bundle = SpriteSheetBundle {
         texture_atlas: texture_atlas_handle,
-        transform: Transform::from_xyz(0.0, 0.0, 100.0),
+        transform: Transform::from_xyz(8., 0., 100.0),
         ..Default::default()
     };
     commands
         .spawn_bundle(sprite_bundle)
         .insert(CharacterAnimation(
-            Timer::new(Duration::from_secs_f32(0.5), true),
+            Timer::new(Duration::from_secs_f32(0.25), true),
             true,
             4,
         ))
@@ -83,19 +81,19 @@ fn player_movement(
         let mut direction = Vec3::ZERO;
 
         if keyboard_input.pressed(KeyCode::A) {
-            direction -= Vec3::new(1.0, 0.0, 0.0);
+            direction -= Vec3::new(16.0, 0.0, 0.0);
         }
 
         if keyboard_input.pressed(KeyCode::D) {
-            direction += Vec3::new(1.0, 0.0, 0.0);
+            direction += Vec3::new(16.0, 0.0, 0.0);
         }
 
         if keyboard_input.pressed(KeyCode::W) {
-            direction += Vec3::new(0.0, 1.0, 0.0);
+            direction += Vec3::new(0.0, 8.0, 0.0);
         }
 
         if keyboard_input.pressed(KeyCode::S) {
-            direction -= Vec3::new(0.0, 1.0, 0.0);
+            direction -= Vec3::new(0.0, 8.0, 0.0);
         }
 
         let z = t.translation.z;

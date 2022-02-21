@@ -1,7 +1,6 @@
 use bevy::prelude::Plugin as BevyPlugin;
 use bevy::prelude::*;
 use bevy::render::camera::Camera;
-use bevy_tiled_camera::*;
 
 #[derive(Default, Debug, Component, Clone, Copy)]
 pub struct CameraFollow;
@@ -10,32 +9,13 @@ pub struct Plugin;
 impl BevyPlugin for Plugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup)
-            .add_plugin(TiledCameraPlugin)
             .insert_resource(Msaa { samples: 4 })
-            .add_system(global_cursor)
             .add_system(follow_character);
     }
 }
 
 #[derive(Component)]
 struct Cursor;
-
-fn global_cursor(
-    windows: Res<Windows>,
-    q_camera: Query<(&Camera, &GlobalTransform, &TiledProjection)>,
-    mut q_cursor: Query<&mut Transform, With<Cursor>>,
-) {
-    let window = windows.get_primary().unwrap();
-
-    if let Some(pos) = window.cursor_position() {
-        for (cam, cam_transform, proj) in q_camera.iter() {
-            if let Some(p) = proj.screen_to_world(cam, &windows, cam_transform, pos) {
-                let mut t = q_cursor.single_mut();
-                *t.translation = *p;
-            }
-        }
-    }
-}
 
 fn setup(mut commands: Commands) {
     let mut camera_bundle = OrthographicCameraBundle::new_2d();
