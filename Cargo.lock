@@ -349,7 +349,6 @@ dependencies = [
 [[package]]
 name = "bevy_ecs_tilemap"
 version = "0.5.0"
-source = "git+https://github.com/StarArawn/bevy_ecs_tilemap?branch=main#e54f71a4978c56594847b24d441d2314a4d51060"
 dependencies = [
  "bevy",
  "bytemuck",
@@ -2461,7 +2460,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "runi"
+name = "runyx"
 version = "0.1.0"
 dependencies = [
  "bevy",

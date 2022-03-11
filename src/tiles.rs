@@ -71,8 +71,8 @@ fn load_map(
     let map_entity = commands.spawn().id();
     let mut map = Map::new(0u16, map_entity);
 
-    let map_size = MapSize(8, 8);
-    let chunk_size = ChunkSize(8, 8);
+    let map_size = MapSize(128, 128);
+    let chunk_size = ChunkSize(1, 1);
     let tile_size = TileSize(18.0, 20.0);
     let texture_size = TextureSize(126., 120.);
     let grid_size = Vec2::new(16.0, 8.);
@@ -104,17 +104,16 @@ fn load_map(
 
         let mut random = thread_rng();
 
-        for x in 0..256 {
-            for y in 0..256 {
+        for x in 0..128 {
+            for y in 0..128 {
                 let position = TilePos(x, y);
                 let _ = layer_builder.set_tile(
                     position,
                     TileBundle {
                         tile: Tile {
-                            texture_index: random.gen_range(0..4) * 7,
+                            texture_index: ((x + y) % 4) as u16 * 7,
                             ..Default::default()
                         },
-
                         ..Default::default()
                     },
                 );

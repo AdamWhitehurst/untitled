@@ -1,6 +1,6 @@
 use bevy::prelude::Plugin as BevyPlugin;
 use bevy::prelude::*;
-use bevy::render::camera::Camera;
+use bevy::render::camera::{Camera, DepthCalculation, ScalingMode};
 
 #[derive(Default, Debug, Component, Clone, Copy)]
 pub struct CameraFollow;
@@ -35,8 +35,10 @@ fn follow_character(
         }
 
         if let (Ok(mut t), Some(tr)) = (transforms.get_mut(flw_e), tr) {
+            let z = t.translation.z;
             t.translation.x = tr.x;
             t.translation.y = tr.y;
+            t.translation.z = z;
         }
     }
 }
