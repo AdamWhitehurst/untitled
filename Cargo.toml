@@ -9,6 +9,7 @@ version = "0.1.0"
 bevy = "0.6"
 # bevy_ecs_tilemap = { git="https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main", features = ["atlas"]}
 bevy_ecs_tilemap = { path = "./bevy_ecs_tilemap", features = ["atlas"] }
+bevy_tweening = "0.3"
 wasm-bindgen = "0.2"
 rand = "0.8"
 # rand ={ version="0.8"  }

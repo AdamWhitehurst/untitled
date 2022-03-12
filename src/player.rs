@@ -22,7 +22,7 @@ impl BevyPlugin for Plugin {
                 CoreStage::Update,
                 "player_move",
                 SystemStage::parallel()
-                    .with_run_criteria(FixedTimestep::steps_per_second(1.0))
+                    .with_run_criteria(FixedTimestep::steps_per_second(2.5))
                     .with_system(move_player),
             )
             .add_system_set(
