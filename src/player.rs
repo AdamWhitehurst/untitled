@@ -70,45 +70,37 @@ fn player_input(keyboard_input: Res<Input<KeyCode>>, mut query: Query<&mut Playe
         let mut dir = Vec3::ZERO;
 
         if keyboard_input.pressed(KeyCode::A) {
-            // dir += Vec3::new(-16.0, 0.0, 0.0);
             dir.x = -1.0;
         }
 
         if keyboard_input.pressed(KeyCode::D) {
-            // dir += Vec3::new(16.0, 0.0, 0.0);
             dir.x = 1.0;
         }
 
         if keyboard_input.pressed(KeyCode::W) {
-            // dir += Vec3::new(0.0, 8.0, 0.0);
             dir.y = 1.0;
         }
 
         if keyboard_input.pressed(KeyCode::X) {
-            // dir += Vec3::new(0.0, -8.0, 0.0);
             dir.y = -1.0;
         }
 
         if keyboard_input.pressed(KeyCode::E) {
-            // dir += Vec3::new(16.0, 8.0, 0.0);
             dir.x = 1.0;
             dir.y = 1.0;
         }
 
         if keyboard_input.pressed(KeyCode::Q) {
-            // dir += Vec3::new(-16.0, 8.0, 0.0);
             dir.x = -1.0;
             dir.y = 1.0;
         }
 
         if keyboard_input.pressed(KeyCode::Z) {
-            // dir += Vec3::new(-16.0, -8.0, 0.0);
             dir.x = -1.0;
             dir.y = -1.0;
         }
 
         if keyboard_input.pressed(KeyCode::C) {
-            // dir += Vec3::new(16.0, -8.0, 0.0);
             dir.x = 1.0;
             dir.y = -1.0;
         }
