@@ -65,32 +65,63 @@ fn setup(
         .insert(PlayerCharacter::default());
 }
 
-// A simple camera system for moving and zooming the camera.
 fn player_input(keyboard_input: Res<Input<KeyCode>>, mut query: Query<&mut PlayerCharacter>) {
     if let Some(mut pc) = query.get_single_mut().ok() {
-        let mut direction = Vec3::ZERO;
+        let mut dir = Vec3::ZERO;
 
         if keyboard_input.pressed(KeyCode::A) {
-            direction -= Vec3::new(16.0, 0.0, 0.0);
+            // dir += Vec3::new(-16.0, 0.0, 0.0);
+            dir.x = -1.0;
         }
 
         if keyboard_input.pressed(KeyCode::D) {
-            direction += Vec3::new(16.0, 0.0, 0.0);
+            // dir += Vec3::new(16.0, 0.0, 0.0);
+            dir.x = 1.0;
         }
 
         if keyboard_input.pressed(KeyCode::W) {
-            direction += Vec3::new(0.0, 8.0, 0.0);
+            // dir += Vec3::new(0.0, 8.0, 0.0);
+            dir.y = 1.0;
         }
 
-        if keyboard_input.pressed(KeyCode::S) {
-            direction -= Vec3::new(0.0, 8.0, 0.0);
-        }
-        if direction != Vec3::ZERO {
-            info!("Direction: {:?}", direction);
+        if keyboard_input.pressed(KeyCode::X) {
+            // dir += Vec3::new(0.0, -8.0, 0.0);
+            dir.y = -1.0;
         }
 
-        if direction != Vec3::ZERO {
-            *pc = PlayerCharacter(direction);
+        if keyboard_input.pressed(KeyCode::E) {
+            // dir += Vec3::new(16.0, 8.0, 0.0);
+            dir.x = 1.0;
+            dir.y = 1.0;
+        }
+
+        if keyboard_input.pressed(KeyCode::Q) {
+            // dir += Vec3::new(-16.0, 8.0, 0.0);
+            dir.x = -1.0;
+            dir.y = 1.0;
+        }
+
+        if keyboard_input.pressed(KeyCode::Z) {
+            // dir += Vec3::new(-16.0, -8.0, 0.0);
+            dir.x = -1.0;
+            dir.y = -1.0;
+        }
+
+        if keyboard_input.pressed(KeyCode::C) {
+            // dir += Vec3::new(16.0, -8.0, 0.0);
+            dir.x = 1.0;
+            dir.y = -1.0;
+        }
+
+        if dir != Vec3::ZERO {
+            dir.x *= 16.0;
+            dir.y *= 8.0;
+
+            if dir.x != 0.0 && dir.y != 0.0 {
+                dir *= 0.5;
+            }
+
+            *pc = PlayerCharacter(dir);
         }
     }
 }
