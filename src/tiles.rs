@@ -71,8 +71,8 @@ fn load_map(
     let map_entity = commands.spawn().id();
     let mut map = Map::new(0u16, map_entity);
 
-    let map_size = MapSize(128, 128);
-    let chunk_size = ChunkSize(1, 1);
+    let map_size = MapSize(1, 1);
+    let chunk_size = ChunkSize(64, 64);
     let tile_size = TileSize(18.0, 20.0);
     let texture_size = TextureSize(126., 120.);
     let grid_size = Vec2::new(16.0, 8.);
@@ -88,14 +88,6 @@ fn load_map(
     //     LayerBuilder::<TileBundle>::new(&mut commands, map_settings.clone(), 0u16, 0u16);
     // map.add_layer(&mut commands, 0u16, layer_0_entity);
 
-    // layer_0.set_all(TileBundle {
-    //     tile: Tile {
-    //         texture_index: 7,
-    //         ..Default::default()
-    //     },
-    //     ..Default::default()
-    // });
-
     // Make 2 layers on "top" of the base map.
     for z in 0..1 {
         let (mut layer_builder, layer_entity) =
@@ -104,14 +96,14 @@ fn load_map(
 
         let mut random = thread_rng();
 
-        for x in 0..128 {
-            for y in 0..128 {
+        for x in 0..64 {
+            for y in 0..64 {
                 let position = TilePos(x, y);
                 let _ = layer_builder.set_tile(
                     position,
                     TileBundle {
                         tile: Tile {
-                            texture_index: ((x + y) % 4) as u16 * 7,
+                            texture_index: 0,
                             ..Default::default()
                         },
                         ..Default::default()

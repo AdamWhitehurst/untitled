@@ -1,8 +1,10 @@
 use std::time::Duration;
 
 use bevy::core::FixedTimestep;
+use bevy::input::ElementState;
 use bevy::prelude::Plugin as BevyPlugin;
 use bevy::prelude::*;
+use bevy::{input::keyboard::KeyboardInput, prelude::*};
 
 use crate::camera::CameraFollow;
 use crate::mouse::GlobalCursorPosition;
@@ -10,30 +12,22 @@ use crate::sprite::CharacterAnimation;
 
 pub struct Plugin;
 #[derive(Component, Debug, Default, Clone, Copy)]
-pub struct PlayerCharacter;
-
-pub enum PlayerState {
-    Idle,
-}
-
-// pub type PlayerAnimation = Vec<>
-//
-// impl PlayerState {
-//     fn to_animation(&self) -> Into
-// }
+pub struct PlayerCharacter(Vec3);
 
 impl BevyPlugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.add_stage_after(
-            CoreStage::Update,
-            "fixed_update",
-            SystemStage::parallel()
-                .with_run_criteria(FixedTimestep::steps_per_second(5.0))
-                .with_system(player_movement),
-        )
-        .add_system(animate_sprite)
-        // .add_startup_system(setup);
-        .add_system_set(SystemSet::on_enter(crate::tiles::AssetState::Loaded).with_system(setup));
+        app.add_system(player_input)
+            .add_system(animate_sprite)
+            .add_stage_after(
+                CoreStage::Update,
+                "player_move",
+                SystemStage::parallel()
+                    .with_run_criteria(FixedTimestep::steps_per_second(1.0))
+                    .with_system(move_player),
+            )
+            .add_system_set(
+                SystemSet::on_enter(crate::tiles::AssetState::Loaded).with_system(setup),
+            );
     }
 }
 
@@ -68,16 +62,12 @@ fn setup(
             4,
         ))
         .insert(CameraFollow)
-        .insert(PlayerCharacter);
+        .insert(PlayerCharacter::default());
 }
 
 // A simple camera system for moving and zooming the camera.
-fn player_movement(
-    keyboard_input: Res<Input<KeyCode>>,
-    cursor_tile: Res<GlobalCursorPosition>,
-    mut query: Query<&mut Transform, With<PlayerCharacter>>,
-) {
-    for mut t in query.iter_mut() {
+fn player_input(keyboard_input: Res<Input<KeyCode>>, mut query: Query<&mut PlayerCharacter>) {
+    if let Some(mut pc) = query.get_single_mut().ok() {
         let mut direction = Vec3::ZERO;
 
         if keyboard_input.pressed(KeyCode::A) {
@@ -95,13 +85,20 @@ fn player_movement(
         if keyboard_input.pressed(KeyCode::S) {
             direction -= Vec3::new(0.0, 8.0, 0.0);
         }
+        if direction != Vec3::ZERO {
+            info!("Direction: {:?}", direction);
+        }
 
-        let z = t.translation.z;
-        t.translation += direction * 1.0;
-        t.translation = t.translation.round();
-        // Important! We need to restore the Z values when moving the camera around.
-        // Bevy has a specific camera setup and this can mess with how our layers are shown.
-        t.translation.z = z;
+        if direction != Vec3::ZERO {
+            *pc = PlayerCharacter(direction);
+        }
+    }
+}
+
+fn move_player(mut query: Query<(&mut Transform, &mut PlayerCharacter)>) {
+    for (mut t, mut pc) in query.iter_mut() {
+        t.translation += pc.0;
+        *pc = PlayerCharacter(Vec3::ZERO);
     }
 }
 
