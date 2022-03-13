@@ -5,6 +5,7 @@ mod camera;
 mod mouse;
 mod player;
 mod sprite;
+mod tile_editor;
 mod tiles;
 
 #[cfg(target_arch = "wasm32")]

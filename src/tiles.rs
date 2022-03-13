@@ -2,7 +2,8 @@ use bevy::prelude::*;
 use bevy::render::render_resource::TextureUsages;
 use bevy::{asset::LoadState, render::render_resource::FilterMode};
 use bevy_ecs_tilemap::prelude::*;
-use rand::{thread_rng, Rng};
+use rand::thread_rng;
+
 pub struct TilesPlugin;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -15,6 +16,7 @@ pub enum AssetState {
 impl Plugin for TilesPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Vec<Handle<Image>>>()
+            // bevy_ecs_tilemap
             .add_plugin(TilemapPlugin)
             .add_state(AssetState::Initial)
             .add_system_set(SystemSet::on_enter(AssetState::Initial).with_system(setup_tiles))
