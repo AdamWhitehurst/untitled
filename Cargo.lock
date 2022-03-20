@@ -349,16 +349,6 @@ dependencies = [
 [[package]]
 name = "bevy_ecs_tilemap"
 version = "0.5.0"
-dependencies = [
- "bevy",
- "bytemuck",
- "log",
- "regex",
-]
-
-[[package]]
-name = "bevy_ecs_tilemap"
-version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a9ae9433efc108cc26600b214e6c114d7d3df650d414e2505e1e5726c3ca1938"
 dependencies = [
@@ -366,6 +356,17 @@ dependencies = [
  "bytemuck",
  "log",
  "morton-encoding",
+ "regex",
+]
+
+[[package]]
+name = "bevy_ecs_tilemap"
+version = "0.5.0"
+source = "git+https://github.com/StarArawn/bevy_ecs_tilemap?branch=main#d5169b6acf96d5f4a88592c3d6d24bde8ad724f6"
+dependencies = [
+ "bevy",
+ "bytemuck",
+ "log",
  "regex",
 ]
 
@@ -695,6 +696,7 @@ dependencies = [
  "bevy_tile_atlas",
  "bevy_tileset_tiles",
  "futures",
+ "rand",
  "ron",
  "serde",
  "thiserror",
@@ -709,6 +711,7 @@ dependencies = [
  "bevy",
  "bevy_ecs_tilemap 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bevy_tileset",
+ "serde",
  "thiserror",
 ]
 
@@ -2697,7 +2700,7 @@ name = "runyx"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "bevy_ecs_tilemap 0.5.0",
+ "bevy_ecs_tilemap 0.5.0 (git+https://github.com/StarArawn/bevy_ecs_tilemap?branch=main)",
  "bevy_tileset_map",
  "bevy_tweening",
  "rand",

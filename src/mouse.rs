@@ -1,9 +1,8 @@
 use bevy::prelude::Plugin as BevyPlugin;
 use bevy::prelude::*;
-use bevy::render::camera::CameraProjection;
 use bevy_ecs_tilemap::Map;
 use bevy_ecs_tilemap::MapQuery;
-use bevy_ecs_tilemap::{Tile, TilePos};
+use bevy_ecs_tilemap::TilePos;
 pub struct Plugin;
 pub type GlobalCursorPosition = (Option<Vec2>, Option<Vec2>);
 pub type CursorTilePosition = (Option<TilePos>, Option<TilePos>);
@@ -25,7 +24,7 @@ fn update_global_cursor_pos(
 ) {
     let (last_pos, _) = *global_cursor;
     let win = windows.get_primary().expect("primary_window");
-    for (t, o, c) in query.iter() {
+    for (t, o, _) in query.iter() {
         *global_cursor = if let Some(cursor_screen_pos) = win.cursor_position() {
             let win_half_dims = Vec2::new(win.width() / 2.0, win.height() / 2.0);
             let cam_global_pos = Vec2::new(t.translation.x, t.translation.y);
@@ -94,31 +93,4 @@ fn update_cursor_tile_pos(
     };
 
     *cursor_tile = (curr_cursor_tile_pos, last_cursor_tile_pos);
-}
-
-fn tile_change(
-    mut map: MapQuery,
-    cursor_tile: ResMut<CursorTilePosition>,
-    mut tile_query: Query<&mut Tile>,
-    buttons: Res<Input<MouseButton>>,
-) {
-    let (maybe_curr, _) = *cursor_tile;
-
-    if let Some(pos) = maybe_curr {
-        if let Ok(te) = map.get_tile_entity(pos, 0u16, 0u16) {
-            if let Ok(mut tile) = tile_query.get_mut(te) {
-                *tile = Tile {
-                    texture_index: if buttons.just_pressed(MouseButton::Left) {
-                        tile.texture_index.checked_add(1).unwrap_or(0)
-                    } else if buttons.just_pressed(MouseButton::Right) {
-                        tile.texture_index.checked_sub(1).unwrap_or(0)
-                    } else {
-                        tile.texture_index
-                    },
-                    ..*tile
-                };
-                map.notify_chunk_for_tile(pos, 0u16, 0u16);
-            }
-        }
-    }
 }

@@ -40,7 +40,7 @@ fn follow_character(
             tr = Some(f_t.translation.clone());
         }
 
-        if let (Ok(mut t), Some(tr)) = (transforms.get_mut(flw_e), tr) {
+        if let (Ok(t), Some(tr)) = (transforms.get_mut(flw_e), tr) {
             let mut new_t = t.translation;
             new_t.x = tr.x;
             new_t.y = tr.y;

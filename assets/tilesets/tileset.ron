@@ -1,0 +1,12 @@
+(
+  name: Some("terrain"),
+  id: 0,
+  tiles: {
+    0: "./tiles/0.ron",
+    1: "./tiles/1.ron",
+    2: "./tiles/2.ron",
+    3: "./tiles/3.ron",
+    4: "./tiles/4.ron",
+    5: "./tiles/5.ron",
+  }
+)

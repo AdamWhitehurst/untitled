@@ -58,29 +58,18 @@ impl BevyPlugin for Plugin {
             .add_plugin(TilesetPlugin::default())
             // Adds this crate's plugn
             .add_plugin(TilesetMapPlugin)
-            // /== Required === //
-            // This is the debug plugin. It basically just spawns our tileset in as a sprite
-            .add_plugin(DebugTilesetPlugin::single_with_position(
-                MY_TILESET,
-                Vec3::new(192.0, -32.0, 1.0),
-            ))
+            .add_event::<ClickEvent>()
             .insert_resource(BuildMode {
-                tile_name: String::from("Wall"),
+                tile_name: String::from("Hut"),
                 active_layer: 0u16,
                 mode: 0,
             })
-            .add_event::<helpers::ClickEvent>()
             .add_startup_system(setup_hud)
             .add_system(on_keypress)
             .add_system(helpers::on_click)
             .add_system(update_text)
             .add_system(on_tile_click);
     }
-}
-/// A local state noting if the map has been built or not
-#[derive(Default)]
-struct BuildMapState {
-    built: bool,
 }
 
 /// A simple resource to control what layer and tile we're using
@@ -107,42 +96,41 @@ enum PlacementMode {
 
 /// A system that adds/removes tiles when clicked
 fn on_tile_click(
-    tilesets: Tilesets,
     build_mode: Res<BuildMode>,
-    mut event_reader: EventReader<helpers::ClickEvent>,
+    map_e: Query<Entity, With<Map>>,
+    mut event_reader: EventReader<ClickEvent>,
     mut placer: TilePlacer,
+    mut map: MapQuery,
 ) {
-    if let Some(tileset) = tilesets.get_by_name(MY_TILESET) {
-        for helpers::ClickEvent(ref pos, pressed) in event_reader.iter() {
-            if !pressed {
-                continue;
-            }
+    for ClickEvent(ref pos, pressed) in event_reader.iter() {
+        if !pressed {
+            continue;
+        }
 
-            let tileset_id = tileset.id().clone();
-            let layer_id = build_mode.active_layer;
-            let tile_name = &build_mode.tile_name;
-            let pos: TilePos = (*pos).into();
+        let tileset_id = map_e.get_single().expect("Map entity");
+        let layer_id = build_mode.active_layer;
+        let tile_name = &build_mode.tile_name;
+        let pos: TilePos = (*pos).into();
 
-            if let Some(group_id) = tileset.get_tile_group_id(tile_name) {
-                let tile_id = TileId::new(*group_id, tileset_id);
+        if let Some(group_id) = tileset.get_tile_group_id(tile_name) {
+            let tile_id = TileId::new(*group_id, tileset_id);
 
-                // Place the tile!
-                let place_mode = &PLACE_MODES[build_mode.mode];
-                let error = match place_mode {
-                    PlacementMode::Place => placer.place(tile_id, pos, 0u16, layer_id).err(),
-                    PlacementMode::TryPlace => placer.try_place(tile_id, pos, 0u16, layer_id).err(),
-                    PlacementMode::Toggle => placer.toggle(tile_id, pos, 0u16, layer_id).err(),
-                    PlacementMode::ToggleMatch => {
-                        placer.toggle_matching(tile_id, pos, 0u16, layer_id).err()
-                    }
-                    PlacementMode::Replace => placer.replace(tile_id, pos, 0u16, layer_id).err(),
-                    PlacementMode::Remove => placer.remove(pos, 0u16, layer_id).err(),
-                };
-
-                if let Some(err) = error {
-                    // Just print any errors to the console without panicking
-                    eprintln!("Could not place tile: {}", err);
+            // Place the tile!
+            let place_mode = &PLACE_MODES[build_mode.mode];
+            let error = match place_mode {
+                PlacementMode::Place => placer.place(tile_id, pos, 0u16, layer_id).err(),
+                PlacementMode::TryPlace => placer.try_place(tile_id, pos, 0u16, layer_id).err(),
+                PlacementMode::Toggle => placer.toggle(tile_id, pos, 0u16, layer_id).err(),
+                PlacementMode::ToggleMatch => {
+                    placer.toggle_matching(tile_id, pos, 0u16, layer_id).err()
                 }
+                PlacementMode::Replace => placer.replace(tile_id, pos, 0u16, layer_id).err(),
+                PlacementMode::Remove => placer.remove(pos, 0u16, layer_id).err(),
+            };
+
+            if let Some(err) = error {
+                // Just print any errors to the console without panicking
+                eprintln!("Could not place tile: {}", err);
             }
         }
     }

@@ -1,13 +1,10 @@
 use std::time::Duration;
 
 use bevy::core::FixedTimestep;
-use bevy::input::ElementState;
 use bevy::prelude::Plugin as BevyPlugin;
 use bevy::prelude::*;
-use bevy::{input::keyboard::KeyboardInput, prelude::*};
 
 use crate::camera::CameraFollow;
-use crate::mouse::GlobalCursorPosition;
 use crate::sprite::CharacterAnimation;
 
 pub struct Plugin;
