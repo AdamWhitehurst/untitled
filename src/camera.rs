@@ -2,11 +2,13 @@ use std::time::Duration;
 
 use bevy::prelude::Plugin as BevyPlugin;
 use bevy::prelude::*;
-use bevy::render::camera::Camera;
 use bevy_tweening::lens::TransformPositionLens;
 use bevy_tweening::*;
 
 #[derive(Default, Debug, Component, Clone, Copy)]
+pub struct WorldCamera;
+#[derive(Default, Debug, Component, Clone, Copy)]
+// pub struct CameraFollow(pub Vec3);
 pub struct CameraFollow;
 pub struct Plugin;
 
@@ -22,15 +24,16 @@ impl BevyPlugin for Plugin {
 #[derive(Component)]
 struct Cursor;
 
+pub const SCALE: f32 = 0.25;
 fn setup(mut commands: Commands) {
     let mut camera_bundle = OrthographicCameraBundle::new_2d();
-    camera_bundle.orthographic_projection.scale = 0.25;
-    commands.spawn_bundle(camera_bundle);
+    camera_bundle.orthographic_projection.scale = SCALE;
+    commands.spawn_bundle(camera_bundle).insert(WorldCamera);
 }
 
 fn follow_character(
     mut transforms: Query<&mut Transform>,
-    q_cam: Query<Entity, With<Camera>>,
+    q_cam: Query<Entity, With<WorldCamera>>,
     q_follow: Query<Entity, With<CameraFollow>>,
     mut commands: Commands,
 ) {

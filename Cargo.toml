@@ -7,14 +7,12 @@ version = "0.1.0"
 
 [dependencies]
 bevy = "0.6"
-bevy_ecs_tilemap = { git="https://github.com/StarArawn/bevy_ecs_tilemap", branch = "main", features = ["atlas"]}
-# bevy_ecs_tilemap = { path = "./bevy_ecs_tilemap", default-features = false, features = ["atlas"] }
+bevy_ecs_tilemap = { version = "0.5", default-features = false, features = ["atlas"]}
 bevy_tileset_map = { version = "0.4", features = ["auto-tile", "serialization", "default"]}
-# bevy_tileset_map = { path = "./bevy_tileset_map", features = ["auto-tile", "serialization", "default"]}
 bevy_tweening = "0.3"
 wasm-bindgen = "0.2"
 rand = "0.8"
+serde_json = "1.0"
 # rand ={ version="0.8"  }
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 web-sys = {version = "0.3.36", features = ['Window']}
-

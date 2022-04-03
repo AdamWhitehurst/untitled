@@ -1,74 +1,106 @@
-mod helpers;
-
 use bevy::prelude::Plugin as BevyPlugin;
 use bevy::prelude::*;
+use serde_json;
 
-use bevy_ecs_tilemap::{ChunkSize, MapQuery, MapSize, TilePos, TilemapPlugin};
+use crate::camera::{WorldCamera, SCALE};
+use bevy::math::Vec4Swizzles;
+use bevy::render::render_resource::TextureUsages;
+use bevy_ecs_tilemap::{MapQuery, TilePos, TilemapPlugin};
 use bevy_tileset_map::prelude::*;
-use bevy_tileset_map::tileset::debug::DebugTilesetPlugin;
 
-pub struct ClickEvent(pub UVec2, pub bool);
-
-pub fn window_to_world(position: &Vec2, window: &Window, camera: &Transform) -> Vec4 {
-    // get the size of the window
-    let size = Vec2::new(window.width() as f32, window.height() as f32);
-
-    // the default orthographic projection is in pixels from the center;
-    // just undo the translation
-    let p = *position - size / 2.0;
-
-    // apply the camera transform
-    camera.compute_matrix() * p.extend(0.0).extend(1.0)
-}
-
-fn on_click(
-    query: Query<&Transform, With<Camera>>,
-    wnds: Res<Windows>,
-    buttons: Res<Input<MouseButton>>,
-    mut event_writer: EventWriter<ClickEvent>,
+pub fn set_texture_filters_to_nearest(
+    mut texture_events: EventReader<AssetEvent<Image>>,
+    mut textures: ResMut<Assets<Image>>,
 ) {
-    let just_pressed = buttons.just_pressed(MouseButton::Left);
-    let just_released = buttons.just_released(MouseButton::Left);
-
-    if !just_pressed && !just_released {
-        return;
-    }
-
-    let wnd = wnds.get_primary().unwrap();
-    if let Some(pos) = wnd.cursor_position() {
-        let cam = query.single();
-        let mut pos = window_to_world(&pos, wnd, cam).xy();
-        pos /= Vec2::new(32.0, 32.0);
-
-        let x = pos.x.floor() as u32;
-        let y = pos.y.floor() as u32;
-
-        let pos = UVec2::new(x, y);
-        event_writer.send(ClickEvent(pos, just_pressed));
+    // quick and dirty, run this for all textures anytime a texture is created.
+    for event in texture_events.iter() {
+        match event {
+            AssetEvent::Created { handle } => {
+                if let Some(mut texture) = textures.get_mut(handle) {
+                    texture.texture_descriptor.usage = TextureUsages::TEXTURE_BINDING
+                        | TextureUsages::COPY_SRC
+                        | TextureUsages::COPY_DST;
+                }
+            }
+            _ => (),
+        }
     }
 }
+/// The name of the tileset we'll be loading in this example
+///
+/// This could be any string and doesn't need to be a constant or static.
+///
+/// Additionally, we could just use the handle to the tileset to access it, but we'll
+/// use this because the `DebugTilesetPlugin` expects it
+const MY_TILESET: &str = "terrain";
+/// The position of the cursor at the time of this event
+/// and whether it is pressed or not
+pub struct ClickEvent(pub Vec2, pub bool);
 
 pub struct Plugin;
 
 impl BevyPlugin for Plugin {
     fn build(&self, app: &mut App) {
-        app
-            // === Required === //
-            // Adds the `bevy_tileset` plugin
+        app.add_plugin(TilemapPlugin)
             .add_plugin(TilesetPlugin::default())
-            // Adds this crate's plugn
             .add_plugin(TilesetMapPlugin)
-            .add_event::<ClickEvent>()
+            .init_resource::<MyTileset>()
+            .init_resource::<SavedMap>()
             .insert_resource(BuildMode {
-                tile_name: String::from("Hut"),
+                tile_name: String::from("grass"),
                 active_layer: 0u16,
                 mode: 0,
             })
+            .add_event::<ClickEvent>()
+            .add_startup_system(load_tiles)
             .add_startup_system(setup_hud)
+            .add_system(build_map)
             .add_system(on_keypress)
-            .add_system(helpers::on_click)
+            .add_system(on_click)
+            .add_system(set_texture_filters_to_nearest)
             .add_system(update_text)
             .add_system(on_tile_click);
+    }
+}
+
+#[derive(Default)]
+struct MyTileset {
+    /// This stores the handle to our tileset so it doesn't get unloaded
+    handle: Option<Handle<Tileset>>,
+}
+
+#[derive(Default)]
+struct SavedMap {
+    /// The currently saved tilemap
+    map: Option<SerializableTilemap>,
+}
+
+/// Starts the tileset loading process
+fn load_tiles(mut my_tileset: ResMut<MyTileset>, asset_server: Res<AssetServer>) {
+    my_tileset.handle = Some(asset_server.load("tilesets/tileset.ron"));
+}
+
+/// A local state noting if the map has been built or not
+#[derive(Default)]
+struct BuildMapState {
+    built: bool,
+}
+
+/// A system used to build the tilemap
+fn build_map(
+    tilesets: Tilesets,
+    mut commands: Commands,
+    mut map_query: MapQuery,
+    mut local_state: Local<BuildMapState>,
+    my_tileset: Res<MyTileset>,
+) {
+    if local_state.built {
+        return;
+    }
+
+    if let Some(tileset) = tilesets.get(&my_tileset.handle.clone().unwrap()) {
+        crate::tiles::load_map(&mut commands, &mut map_query, tileset);
+        local_state.built = true;
     }
 }
 
@@ -94,43 +126,87 @@ enum PlacementMode {
     Remove,
 }
 
+pub fn on_click(
+    query: Query<&Transform, With<WorldCamera>>,
+    wnds: Res<Windows>,
+    buttons: Res<Input<MouseButton>>,
+    mut event_writer: EventWriter<ClickEvent>,
+) {
+    let just_pressed = buttons.just_pressed(MouseButton::Left);
+    let just_released = buttons.just_released(MouseButton::Left);
+
+    if !just_pressed && !just_released {
+        return;
+    }
+
+    let wnd = wnds.get_primary().unwrap();
+    if let Some(pos) = wnd.cursor_position() {
+        let cam = query.single();
+        let p = window_to_world(&pos, wnd, cam);
+        event_writer.send(ClickEvent(p, just_pressed));
+    }
+}
+
+pub fn window_to_world(position: &Vec2, window: &Window, camera: &Transform) -> Vec2 {
+    // get the size of the window
+    let size = Vec2::new(window.width() as f32, window.height() as f32);
+
+    // the default orthographic projection is in pixels from the center;
+    // just undo the translation and apply camera scale
+    let p = (*position - size / 2.0) * SCALE;
+
+    // apply the camera transform
+    (camera.compute_matrix() * p.extend(0.0).extend(1.0)).xy()
+}
+
 /// A system that adds/removes tiles when clicked
 fn on_tile_click(
+    tilesets: Tilesets,
     build_mode: Res<BuildMode>,
-    map_e: Query<Entity, With<Map>>,
     mut event_reader: EventReader<ClickEvent>,
     mut placer: TilePlacer,
-    mut map: MapQuery,
 ) {
-    for ClickEvent(ref pos, pressed) in event_reader.iter() {
-        if !pressed {
-            continue;
-        }
+    if let Some(tileset) = tilesets.get_by_name(MY_TILESET) {
+        for ClickEvent(ref p, pressed) in event_reader.iter() {
+            if !pressed {
+                continue;
+            }
 
-        let tileset_id = map_e.get_single().expect("Map entity");
-        let layer_id = build_mode.active_layer;
-        let tile_name = &build_mode.tile_name;
-        let pos: TilePos = (*pos).into();
+            let px = p.x / 8.;
+            let py = p.y / 4.;
+            let x = (px - py) / 2.;
+            let y = (px + py) / 2.;
+            let ppos = Vec2::new(x, -y);
+            if (ppos.x < 0. || ppos.y < 0.) {
+                info!("\n!\n");
+                continue;
+            }
 
-        if let Some(group_id) = tileset.get_tile_group_id(tile_name) {
-            let tile_id = TileId::new(*group_id, tileset_id);
+            let tileset_id = tileset.id().clone();
+            let layer_id = build_mode.active_layer;
+            let tile_name = &build_mode.tile_name;
+            let pos: TilePos = (ppos.floor()).as_uvec2().into();
+            info!("\n\n{:?} -> {:?} -> {:?} \n", p, ppos, pos);
 
-            // Place the tile!
-            let place_mode = &PLACE_MODES[build_mode.mode];
-            let error = match place_mode {
-                PlacementMode::Place => placer.place(tile_id, pos, 0u16, layer_id).err(),
-                PlacementMode::TryPlace => placer.try_place(tile_id, pos, 0u16, layer_id).err(),
-                PlacementMode::Toggle => placer.toggle(tile_id, pos, 0u16, layer_id).err(),
-                PlacementMode::ToggleMatch => {
-                    placer.toggle_matching(tile_id, pos, 0u16, layer_id).err()
+            if let Some(group_id) = tileset.get_tile_group_id(tile_name) {
+                let tile_id = TileId::new(*group_id, tileset_id);
+
+                let place_mode = &PLACE_MODES[build_mode.mode];
+                let error = match place_mode {
+                    PlacementMode::Place => placer.place(tile_id, pos, 0u16, layer_id).err(),
+                    PlacementMode::TryPlace => placer.try_place(tile_id, pos, 0u16, layer_id).err(),
+                    PlacementMode::Toggle => placer.toggle(tile_id, pos, 0u16, layer_id).err(),
+                    PlacementMode::ToggleMatch => {
+                        placer.toggle_matching(tile_id, pos, 0u16, layer_id).err()
+                    }
+                    PlacementMode::Replace => placer.replace(tile_id, pos, 0u16, layer_id).err(),
+                    PlacementMode::Remove => placer.remove(pos, 0u16, layer_id).err(),
+                };
+
+                if let Some(err) = error {
+                    // Just print any errors to the console without panicking
+                    eprintln!("Could not place tile: {}", err);
                 }
-                PlacementMode::Replace => placer.replace(tile_id, pos, 0u16, layer_id).err(),
-                PlacementMode::Remove => placer.remove(pos, 0u16, layer_id).err(),
-            };
-
-            if let Some(err) = error {
-                // Just print any errors to the console without panicking
-                eprintln!("Could not place tile: {}", err);
             }
         }
     }
@@ -144,15 +220,13 @@ fn on_keypress(
     mut saved: ResMut<SavedMap>,
 ) {
     if keys.just_pressed(KeyCode::W) {
-        build_mode.tile_name = String::from("Wall");
+        build_mode.tile_name = String::from("sand");
     } else if keys.just_pressed(KeyCode::G) {
-        build_mode.tile_name = String::from("Glass");
+        build_mode.tile_name = String::from("water");
     } else if keys.just_pressed(KeyCode::D) {
-        build_mode.tile_name = String::from("Dirt");
+        build_mode.tile_name = String::from("dirt");
     } else if keys.just_pressed(KeyCode::E) {
-        build_mode.tile_name = String::from("Empty");
-    } else if keys.just_pressed(KeyCode::P) {
-        build_mode.tile_name = String::from("Pipe");
+        build_mode.tile_name = String::from("grass");
     } else if keys.just_pressed(KeyCode::Up) {
         build_mode.mode = (build_mode.mode + 1) % PLACE_MODES.len();
     } else if keys.just_pressed(KeyCode::Down) {

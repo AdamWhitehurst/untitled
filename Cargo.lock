@@ -360,17 +360,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevy_ecs_tilemap"
-version = "0.5.0"
-source = "git+https://github.com/StarArawn/bevy_ecs_tilemap?branch=main#d5169b6acf96d5f4a88592c3d6d24bde8ad724f6"
-dependencies = [
- "bevy",
- "bytemuck",
- "log",
- "regex",
-]
-
-[[package]]
 name = "bevy_gilrs"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -709,7 +698,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06a4f96e8248aeaff868d3badd3b1efb58d837f541b0953654f187c9163d9168"
 dependencies = [
  "bevy",
- "bevy_ecs_tilemap 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bevy_ecs_tilemap",
  "bevy_tileset",
  "serde",
  "thiserror",
@@ -2700,10 +2689,11 @@ name = "runyx"
 version = "0.1.0"
 dependencies = [
  "bevy",
- "bevy_ecs_tilemap 0.5.0 (git+https://github.com/StarArawn/bevy_ecs_tilemap?branch=main)",
+ "bevy_ecs_tilemap",
  "bevy_tileset_map",
  "bevy_tweening",
  "rand",
+ "serde_json",
  "wasm-bindgen",
  "web-sys",
 ]

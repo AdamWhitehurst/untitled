@@ -13,7 +13,6 @@ impl BevyPlugin for Plugin {
             .insert_resource::<GlobalCursorPosition>((None, None))
             .add_system(update_cursor_tile_pos)
             .insert_resource::<CursorTilePosition>((None, None));
-        // .add_system(tile_change);
     }
 }
 
@@ -36,7 +35,6 @@ fn update_global_cursor_pos(
         } else {
             (None, last_pos)
         };
-        // info!("GC: {:?}", global_cursor);
     }
 }
 
@@ -76,19 +74,9 @@ fn update_cursor_tile_pos(
 
             Some(t)
         } else {
-            // info!(
-            //     " None
-            //     - {:?}
-            //     - {:?}
-            //     - {:?}
-            //     - {:?}
-            //     ",
-            //     pos, map_bl_pos, map_pixel_dims, map_tr_pos
-            // );
             None
         }
     } else {
-        // info!("None 2");
         None
     };
 

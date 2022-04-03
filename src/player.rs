@@ -35,10 +35,10 @@ fn setup(
     mut textures: ResMut<Assets<Image>>,
 ) {
     let texture_handles: Vec<Handle<Image>> = vec![
-        asset_server.load("micro/characters/basic/basic_idle_01.png"),
-        asset_server.load("micro/characters/basic/basic_idle_02.png"),
-        asset_server.load("micro/characters/basic/basic_idle_03.png"),
-        asset_server.load("micro/characters/basic/basic_idle_04.png"),
+        asset_server.load("characters/basic/basic_idle_01.png"),
+        asset_server.load("characters/basic/basic_idle_02.png"),
+        asset_server.load("characters/basic/basic_idle_03.png"),
+        asset_server.load("characters/basic/basic_idle_04.png"),
     ];
     let mut tab = TextureAtlasBuilder::default(); //::add_texture(&mut self, texture_handle, texture)//from_grid(texture_handle, Vec2::new(64., 64.), 13, 21);
     texture_handles.iter().for_each(|t| {
@@ -48,11 +48,12 @@ fn setup(
         texture_atlases.add(tab.finish(&mut textures).expect("texture_atlas_builder"));
     let sprite_bundle = SpriteSheetBundle {
         texture_atlas: texture_atlas_handle,
-        transform: Transform::from_xyz(8., 0., 100.0),
+        transform: Transform::from_xyz(0., 0., 100.0),
         ..Default::default()
     };
     commands
         .spawn_bundle(sprite_bundle)
+        .insert(Transform::from_xyz(0., 0., 100.))
         .insert(CharacterAnimation(
             Timer::new(Duration::from_secs_f32(0.25), true),
             true,
@@ -115,10 +116,17 @@ fn player_input(keyboard_input: Res<Input<KeyCode>>, mut query: Query<&mut Playe
     }
 }
 
-fn move_player(mut query: Query<(&mut Transform, &mut PlayerCharacter)>) {
-    for (mut t, mut pc) in query.iter_mut() {
+fn move_player(
+    mut query: Query<(Entity, &mut Transform, &mut PlayerCharacter)>,
+    commands: Commands,
+) {
+    for (e, mut t, mut pc) in query.iter_mut() {
         t.translation += pc.0;
         *pc = PlayerCharacter(Vec3::ZERO);
+
+        // commands
+        // .entity(e)
+        // .insert(CameraFollow(t.translation.clone()));
     }
 }
 

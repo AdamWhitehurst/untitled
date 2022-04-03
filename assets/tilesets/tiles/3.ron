@@ -1,4 +1,4 @@
 (
   name: "stone",
-  tile: Standard("3.png")
+  tile: Standard("tilesets/tiles/3.png")
 )
