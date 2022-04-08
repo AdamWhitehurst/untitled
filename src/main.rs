@@ -1,7 +1,10 @@
+#![feature(int_abs_diff)]
+
 use bevy::prelude::*;
 use bevy::{window::WindowDescriptor, DefaultPlugins};
 mod camera;
 mod mouse;
+mod pathfinding;
 mod player;
 mod sprite;
 mod tile_editor;
@@ -27,6 +30,7 @@ fn main() {
     .add_plugin(tiles::Plugin)
     .add_plugin(tile_editor::Plugin)
     .add_plugin(mouse::Plugin)
+    .add_plugin(pathfinding::Plugin)
     .add_plugin(player::Plugin);
 
     #[cfg(target_arch = "wasm32")]
