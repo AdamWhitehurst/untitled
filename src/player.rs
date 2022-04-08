@@ -5,7 +5,9 @@ use bevy::prelude::Plugin as BevyPlugin;
 use bevy::prelude::*;
 
 use crate::camera::CameraFollow;
+use crate::pathfinding::TilePath;
 use crate::sprite::CharacterAnimation;
+use crate::tile_editor::iso_to_world;
 
 pub struct Plugin;
 #[derive(Component, Debug, Default, Clone, Copy)]
@@ -19,7 +21,7 @@ impl BevyPlugin for Plugin {
                 CoreStage::Update,
                 "player_move",
                 SystemStage::parallel()
-                    .with_run_criteria(FixedTimestep::steps_per_second(2.5))
+                    .with_run_criteria(FixedTimestep::steps_per_second(10.))
                     .with_system(move_player),
             )
             .add_system_set(
@@ -117,16 +119,19 @@ fn player_input(keyboard_input: Res<Input<KeyCode>>, mut query: Query<&mut Playe
 }
 
 fn move_player(
-    mut query: Query<(Entity, &mut Transform, &mut PlayerCharacter)>,
-    commands: Commands,
+    mut query: Query<(Entity, &mut Transform, &mut PlayerCharacter, &TilePath)>,
+    mut commands: Commands,
 ) {
-    for (e, mut t, mut pc) in query.iter_mut() {
-        t.translation += pc.0;
-        *pc = PlayerCharacter(Vec3::ZERO);
-
-        // commands
-        // .entity(e)
-        // .insert(CameraFollow(t.translation.clone()));
+    for (e, mut t, _, path) in query.iter_mut() {
+        let mut updated_path = path.0.clone();
+        let opt_next = updated_path.pop();
+        if let Some(pos) = opt_next {
+            let wpos = iso_to_world(&Vec2::new(pos.0 as f32, pos.1 as f32));
+            t.translation = wpos.extend(100.);
+            commands.entity(e).insert(TilePath(updated_path));
+        } else {
+            commands.entity(e).remove::<TilePath>();
+        }
     }
 }
 
