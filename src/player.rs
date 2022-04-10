@@ -11,7 +11,20 @@ use crate::tile_editor::iso_to_world;
 
 pub struct Plugin;
 #[derive(Component, Debug, Default, Clone, Copy)]
-pub struct PlayerCharacter(Vec3);
+pub struct PlayerCharacter;
+
+#[derive(Component, Debug, Clone, Copy)]
+pub enum CharacterState {
+    Idle,
+    Walking,
+    Dancing,
+}
+
+impl Default for CharacterState {
+    fn default() -> Self {
+        CharacterState::Idle
+    }
+}
 
 impl BevyPlugin for Plugin {
     fn build(&self, app: &mut App) {
@@ -112,8 +125,6 @@ fn player_input(keyboard_input: Res<Input<KeyCode>>, mut query: Query<&mut Playe
             if dir.x != 0.0 && dir.y != 0.0 {
                 dir *= 0.5;
             }
-
-            *pc = PlayerCharacter(dir);
         }
     }
 }
