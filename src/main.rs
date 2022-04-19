@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 use bevy::{window::WindowDescriptor, DefaultPlugins};
+use bevy_inspector_egui::WorldInspectorPlugin;
 mod camera;
 mod mouse;
 mod pathfinding;
@@ -28,6 +29,7 @@ fn main() {
     ))
     .add_plugins(DefaultPlugins)
     .add_plugin(camera::Plugin)
+    .add_plugin(WorldInspectorPlugin::new())
     .add_plugin(tiles::Plugin)
     .add_plugin(tile_editor::Plugin)
     .add_plugin(mouse::Plugin)

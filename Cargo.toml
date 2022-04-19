@@ -6,6 +6,7 @@ version = "0.1.0"
 
 [dependencies]
 bevy = "0.6"
+bevy-inspector-egui = "0.9"
 bevy_ecs_tilemap = { version = "0.5", default-features = false, features = ["atlas"]}
 bevy_tileset_map = { version = "0.4", features = ["auto-tile", "serialization", "default"]}
 bevy_tweening = "0.3"
