@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::{math::Vec3Swizzles, prelude::Plugin as BevyPlugin};
 
 use crate::pathfinding::TilePath;
+use crate::utils::*;
 use crate::{
     camera::{WorldCamera, SCALE},
     pathfinding::Destination,
@@ -64,14 +65,6 @@ fn build_map(
         crate::tiles::load_map(&mut commands, &mut map_query, tileset);
         local_state.built = true;
     }
-}
-
-pub fn iso_to_world(p: &Vec2) -> Vec2 {
-    Vec2::new((p.x - p.y) * 8., -(p.y + p.x) * 4.)
-}
-
-pub fn project_iso(p: &Vec2) -> Vec2 {
-    Vec2::new((p.x / 16.) - (p.y / 8.), (-p.x / 16.) - (p.y / 8.))
 }
 
 pub fn on_click(

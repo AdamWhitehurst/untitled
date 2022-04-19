@@ -9,6 +9,7 @@ mod player;
 mod sprite;
 mod tile_editor;
 mod tiles;
+mod utils;
 
 #[cfg(target_arch = "wasm32")]
 mod canvas_resizer;

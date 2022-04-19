@@ -3,26 +3,72 @@ use std::time::Duration;
 use bevy::core::FixedTimestep;
 use bevy::prelude::Plugin as BevyPlugin;
 use bevy::prelude::*;
+use bevy_ecs_tilemap::TilePos;
 
 use crate::camera::CameraFollow;
 use crate::pathfinding::TilePath;
 use crate::sprite::CharacterAnimation;
-use crate::tile_editor::iso_to_world;
+use crate::utils::*;
 
 pub struct Plugin;
+
 #[derive(Component, Debug, Default, Clone, Copy)]
 pub struct PlayerCharacter;
 
 #[derive(Component, Debug, Clone, Copy)]
-pub enum CharacterState {
+pub enum Animation {
     Idle,
-    Walking,
-    Dancing,
+    Walk,
+    Dance,
+    Jump,
 }
 
-impl Default for CharacterState {
+impl Default for Animation {
     fn default() -> Self {
-        CharacterState::Idle
+        Animation::Idle
+    }
+}
+
+impl Animation {
+    pub fn frames(&self) -> Vec<&'static str> {
+        use Animation::*;
+        match *self {
+            Idle => vec![
+                "characters/basic/basic_idle_01.png",
+                "characters/basic/basic_idle_02.png",
+                "characters/basic/basic_idle_03.png",
+                "characters/basic/basic_idle_04.png",
+            ],
+            Walk => vec![
+                "characters/basic/basic_run_01.png",
+                "characters/basic/basic_run_02.png",
+                "characters/basic/basic_run_03.png",
+                "characters/basic/basic_run_04.png",
+                "characters/basic/basic_run_05.png",
+                "characters/basic/basic_run_06.png",
+                "characters/basic/basic_run_07.png",
+                "characters/basic/basic_run_08.png",
+            ],
+            Dance | Jump => vec![
+                "characters/basic/basic_jump_01.png",
+                "characters/basic/basic_jump_02.png",
+                "characters/basic/basic_jump_03.png",
+                "characters/basic/basic_jump_04.png",
+                "characters/basic/basic_jump_05.png",
+                "characters/basic/basic_jump_06.png",
+                "characters/basic/basic_jump_07.png",
+                "characters/basic/basic_jump_08.png",
+                "characters/basic/basic_jump_09.png",
+                "characters/basic/basic_jump_10.png",
+            ],
+        }
+    }
+    pub fn repeats(&self) -> bool {
+        use Animation::*;
+        match *self {
+            Walk | Idle | Dance => true,
+            Jump => false,
+        }
     }
 }
 
@@ -30,6 +76,7 @@ impl BevyPlugin for Plugin {
     fn build(&self, app: &mut App) {
         app.add_system(player_input)
             .add_system(animate_sprite)
+            .add_system(tile_trans)
             .add_stage_after(
                 CoreStage::Update,
                 "player_move",
@@ -126,6 +173,12 @@ fn player_input(keyboard_input: Res<Input<KeyCode>>, mut query: Query<&mut Playe
                 dir *= 0.5;
             }
         }
+    }
+}
+
+fn tile_trans(query: Query<(Entity, &TilePos, &GlobalTransform)>) {
+    for (_, t, tr) in query.iter() {
+        info!("{:?} {:?}", t, tr.translation);
     }
 }
 
