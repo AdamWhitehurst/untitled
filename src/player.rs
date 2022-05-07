@@ -76,13 +76,12 @@ impl BevyPlugin for Plugin {
     fn build(&self, app: &mut App) {
         app.add_system(player_input)
             .add_system(animate_sprite)
-            .add_system(tile_trans)
             .add_stage_after(
                 CoreStage::Update,
                 "player_move",
                 SystemStage::parallel()
                     .with_run_criteria(FixedTimestep::steps_per_second(10.))
-                    .with_system(move_player),
+                    .with_system(path_mover),
             )
             .add_system_set(
                 SystemSet::on_enter(crate::tiles::AssetState::Loaded).with_system(setup),
@@ -176,17 +175,8 @@ fn player_input(keyboard_input: Res<Input<KeyCode>>, mut query: Query<&mut Playe
     }
 }
 
-fn tile_trans(query: Query<(Entity, &TilePos, &GlobalTransform)>) {
-    for (_, t, tr) in query.iter() {
-        info!("{:?} {:?}", t, tr.translation);
-    }
-}
-
-fn move_player(
-    mut query: Query<(Entity, &mut Transform, &mut PlayerCharacter, &TilePath)>,
-    mut commands: Commands,
-) {
-    for (e, mut t, _, path) in query.iter_mut() {
+fn path_mover(mut query: Query<(Entity, &mut Transform, &TilePath)>, mut commands: Commands) {
+    for (e, mut t, path) in query.iter_mut() {
         let mut updated_path = path.0.clone();
         let opt_next = updated_path.pop();
         if let Some(pos) = opt_next {
@@ -216,3 +206,4 @@ fn animate_sprite(
         }
     }
 }
+//! https://github.com/lucaspoffo/renet/tree/master/bevy_renet

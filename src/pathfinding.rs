@@ -93,10 +93,10 @@ pub fn pathfinding(
         if map_query.get_tile_entity(d.goal, 0, 0).is_err()
             || map_query.get_tile_entity(d.start, 0, 0).is_err()
         {
-            info!("! 1");
             commands.entity(e).remove::<Destination>();
             continue;
         }
+
         let mut graph: HashMap<TilePos, Node> = HashMap::default();
 
         // Init Graph
